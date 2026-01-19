@@ -1,0 +1,1747 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ECO-COL FINAL V5.0 - Sistema Completo Hospital 1 ↔ Hospital 2</title>
+    
+    <!-- Cornerstone DICOM Libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/cornerstone-core@2.6.1/dist/cornerstone.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/cornerstone-math@0.1.10/dist/cornerstoneMath.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/cornerstone-tools@6.0.10/dist/cornerstoneTools.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dicom-parser@1.8.13/dist/dicomParser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/cornerstone-wado-image-loader@4.13.2/dist/cornerstoneWADOImageLoader.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --primary: #1976d2;
+            --primary-dark: #1565c0;
+            --accent: #00bfa5;
+            --success: #4caf50;
+            --warning: #ff9800;
+            --danger: #f44336;
+            --bg-dark: #121212;
+            --bg-medium: #1e1e1e;
+            --bg-light: #252525;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --border: #333;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        /* Header */
+        .header {
+            background: linear-gradient(135deg, #0f4c81, #1976d2, #2196f3);
+            padding: 1.2rem 2rem;
+            box-shadow: 0 6px 25px rgba(0,0,0,0.5);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+            border-bottom: 3px solid var(--accent);
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+        
+        .header h1 {
+            font-size: 1.6rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .badge {
+            background: linear-gradient(135deg, var(--accent), #00e5cc);
+            padding: 0.3rem 0.9rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            color: #000;
+            box-shadow: 0 2px 8px rgba(0,191,165,0.4);
+            animation: pulse-badge 2s infinite;
+        }
+        
+        @keyframes pulse-badge {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+        
+        /* Tabs */
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            max-width: 1800px;
+            margin: 1rem auto 0;
+            padding: 0 2rem;
+        }
+        
+        .tab {
+            padding: 0.8rem 1.5rem;
+            background: var(--bg-medium);
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 8px 8px 0 0;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .tab:hover { background: var(--bg-light); }
+        .tab.active { background: var(--bg-dark); color: var(--accent); }
+        
+        /* Container */
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* Section */
+        .section {
+            background: linear-gradient(145deg, var(--bg-medium), #232323);
+            border-radius: 16px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 6px 20px rgba(0,0,0,0.4);
+            border: 2px solid var(--border);
+            transition: all 0.3s;
+        }
+        
+        .section:hover {
+            box-shadow: 0 8px 28px rgba(0,0,0,0.5);
+            border-color: rgba(0,191,165,0.3);
+        }
+        
+        .section h2 {
+            color: var(--accent);
+            margin-bottom: 1.8rem;
+            font-size: 1.4rem;
+            padding-bottom: 1rem;
+            border-bottom: 3px solid var(--accent);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        /* Form */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.8rem;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            border-radius: 6px;
+            font-family: inherit;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        
+        /* Button */
+        .btn {
+            padding: 0.9rem 1.6rem;
+            border: none;
+            border-radius: 8px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+            font-size: 0.95rem;
+            box-shadow: 0 3px 10px rgba(0,0,0,0.3);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .btn::before {
+            content: '';
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            width: 0;
+            height: 0;
+            border-radius: 50%;
+            background: rgba(255,255,255,0.2);
+            transform: translate(-50%, -50%);
+            transition: width 0.6s, height 0.6s;
+        }
+        
+        .btn:hover::before {
+            width: 300px;
+            height: 300px;
+        }
+        
+        .btn-primary {
+            background: linear-gradient(135deg, #1976d2, #1565c0);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #1565c0, #0d47a1);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(25,118,210,0.4);
+        }
+        
+        .btn-success {
+            background: linear-gradient(135deg, #4caf50, #2e7d32);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: linear-gradient(135deg, #45a049, #1b5e20);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(76,175,80,0.4);
+        }
+        
+        .btn-danger {
+            background: linear-gradient(135deg, #f44336, #c62828);
+            color: white;
+        }
+        
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #e53935, #b71c1c);
+            transform: translateY(-3px);
+            box-shadow: 0 6px 20px rgba(244,67,54,0.4);
+        }
+        
+        /* Grid */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .card {
+            background: linear-gradient(145deg, var(--bg-light), #2a2a2a);
+            padding: 1.5rem;
+            border-radius: 12px;
+            border: 2px solid var(--border);
+            cursor: pointer;
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(0,191,165,0.1), transparent);
+            transition: left 0.5s;
+        }
+        
+        .card:hover::before {
+            left: 100%;
+        }
+        
+        .card:hover {
+            transform: translateY(-8px) scale(1.02);
+            box-shadow: 0 12px 30px rgba(0,191,165,0.3);
+            border-color: var(--accent);
+            background: linear-gradient(145deg, #2a3f3a, #1e3a33);
+        }
+        
+        .card h3 {
+            color: var(--accent);
+            margin-bottom: 1rem;
+            font-size: 1.2rem;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .card p {
+            color: var(--text-secondary);
+            margin: 0.5rem 0;
+            font-size: 0.9rem;
+            line-height: 1.6;
+        }
+        
+        .card p strong {
+            color: var(--text-primary);
+            font-weight: 600;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 0.35rem 0.9rem;
+            border-radius: 16px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-top: 0.8rem;
+            margin-right: 0.5rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.3);
+            transition: all 0.3s;
+        }
+        
+        .status-badge:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+        
+        .status-badge.pending {
+            background: linear-gradient(135deg, #ff9800, #ff6f00);
+            color: #000;
+            animation: pulse-pending 2s infinite;
+        }
+        
+        .status-badge.completed {
+            background: linear-gradient(135deg, #4caf50, #2e7d32);
+            color: #fff;
+        }
+        
+        .status-badge.has-dicom {
+            background: linear-gradient(135deg, #2196f3, #1565c0);
+            color: #fff;
+        }
+        
+        @keyframes pulse-pending {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+        
+        /* Viewer */
+        .viewer-container {
+            display: grid;
+            grid-template-columns: 1fr 380px;
+            gap: 1.5rem;
+            height: 80vh;
+        }
+        
+        .viewer-main {
+            background: linear-gradient(145deg, #000, #0a0a0a);
+            border-radius: 12px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+            box-shadow: 0 8px 32px rgba(0,0,0,0.6);
+            border: 2px solid var(--border);
+        }
+        
+        .viewer-toolbar {
+            background: linear-gradient(135deg, #1a1a1a, #2a2a2a);
+            padding: 1rem;
+            display: flex;
+            gap: 0.7rem;
+            flex-wrap: wrap;
+            border-bottom: 2px solid var(--accent);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.4);
+        }
+        
+        .viewer-toolbar .btn {
+            padding: 0.7rem 1.2rem;
+            font-size: 0.85rem;
+        }
+        
+        .viewer-viewport {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            background: #000;
+        }
+        
+        .viewer-viewport > div {
+            box-shadow: 0 8px 32px rgba(0,191,165,0.3);
+            border: 3px solid var(--accent);
+            border-radius: 4px;
+        }
+        
+        .viewer-sidebar {
+            background: linear-gradient(145deg, var(--bg-light), #2a2a2a);
+            padding: 1.5rem;
+            border-radius: 12px;
+            overflow-y: auto;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            border: 2px solid var(--border);
+        }
+        
+        .viewer-sidebar::-webkit-scrollbar {
+            width: 8px;
+        }
+        
+        .viewer-sidebar::-webkit-scrollbar-track {
+            background: rgba(0,0,0,0.2);
+            border-radius: 4px;
+        }
+        
+        .viewer-sidebar::-webkit-scrollbar-thumb {
+            background: var(--accent);
+            border-radius: 4px;
+        }
+        
+        .viewer-sidebar::-webkit-scrollbar-thumb:hover {
+            background: #00e5cc;
+        }
+        
+        .info-group {
+            margin-bottom: 1.8rem;
+            background: rgba(0,0,0,0.2);
+            padding: 1.2rem;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            transition: all 0.3s;
+        }
+        
+        .info-group:hover {
+            background: rgba(0,0,0,0.3);
+            border-color: var(--accent);
+            box-shadow: 0 4px 12px rgba(0,191,165,0.1);
+        }
+        
+        .info-group h3 {
+            color: var(--accent);
+            font-size: 0.95rem;
+            margin-bottom: 1.2rem;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            padding-bottom: 0.8rem;
+            border-bottom: 2px solid var(--accent);
+            text-shadow: 0 2px 4px rgba(0,0,0,0.3);
+        }
+        
+        .info-group p {
+            margin: 0.7rem 0;
+            color: var(--text-secondary);
+            line-height: 1.6;
+        }
+        
+        .info-group p strong {
+            color: var(--text-primary);
+            font-weight: 600;
+            margin-right: 0.5rem;
+        }
+        
+        .slider-control {
+            margin-bottom: 1.2rem;
+        }
+        
+        .slider-control label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.7rem;
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+        
+        .slider-control label span:last-child {
+            color: var(--accent);
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+        
+        .slider {
+            width: 100%;
+            height: 6px;
+            background: linear-gradient(90deg, var(--border), var(--bg-light));
+            border-radius: 3px;
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #00e5cc);
+            cursor: pointer;
+            box-shadow: 0 2px 8px rgba(0,191,165,0.5);
+            transition: all 0.3s;
+        }
+        
+        .slider::-webkit-slider-thumb:hover {
+            transform: scale(1.2);
+            box-shadow: 0 4px 12px rgba(0,191,165,0.7);
+        }
+        
+        .slider::-moz-range-thumb {
+            width: 18px;
+            height: 18px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--accent), #00e5cc);
+            cursor: pointer;
+            border: none;
+            box-shadow: 0 2px 8px rgba(0,191,165,0.5);
+        }
+        
+        /* Empty State */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+        
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+        
+        /* Notification */
+        .notification {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            z-index: 10000;
+            animation: slideIn 0.3s;
+            font-weight: 600;
+        }
+        
+        .notification.success { background: var(--success); }
+        .notification.error { background: var(--danger); }
+        .notification.info { background: var(--primary); }
+        .notification.warning { background: var(--warning); color: #000; }
+        
+        @keyframes slideIn {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        /* Stats Grid */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: var(--bg-light);
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+        
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        
+        /* Loading */
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10001;
+        }
+        
+        .loading-content {
+            text-align: center;
+            color: var(--accent);
+        }
+        
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 6px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1.5rem;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* Input file hidden */
+        input[type="file"] {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <h1>🏥 ECO-COL FINAL V5.0 <span class="badge">SISTEMA COMPLETO</span></h1>
+            <div style="display: flex; gap: 2rem; font-size: 0.9rem;">
+                <div>📍 PopayÃ¡n, Colombia</div>
+                <div>🔒 100% Local + IndexedDB</div>
+                <div id="system-status">🟢 Sistema Activo</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tabs -->
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('hospital1')">🏥 Hospital #1 (Periférico)</button>
+        <button class="tab" onclick="switchTab('hospital2')">👨‍⚕️ Hospital #2 (Radiólogos)</button>
+        <button class="tab" onclick="switchTab('admin')">⚙️ Administrador</button>
+    </div>
+    
+    <div class="container">
+        <!-- ==================== HOSPITAL 1 TAB ==================== -->
+        <div id="tab-hospital1" class="tab-content active">
+            <!-- Vista Principal -->
+            <div id="h1-main-view">
+                <!-- Registro de Paciente -->
+                <div class="section">
+                    <h2>➕ Registrar Nuevo Paciente</h2>
+                    <form id="patient-form">
+                        <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+                            <div class="form-group">
+                                <label>Nombre Completo *</label>
+                                <input type="text" id="patient-name" required>
+                            </div>
+                            <div class="form-group">
+                                <label>DNI / Cédula *</label>
+                                <input type="text" id="patient-dni" required>
+                            </div>
+                            <div class="form-group">
+                                <label>Edad</label>
+                                <input type="number" id="patient-age">
+                            </div>
+                        </div>
+                        <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                            <div class="form-group">
+                                <label>Género</label>
+                                <select id="patient-gender">
+                                    <option value="M">Masculino</option>
+                                    <option value="F">Femenino</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Teléfono</label>
+                                <input type="tel" id="patient-phone">
+                            </div>
+                        </div>
+                        <button type="submit" class="btn btn-primary">💾 Registrar Paciente</button>
+                    </form>
+                </div>
+                
+                <!-- Crear Estudio -->
+                <div class="section">
+                    <h2>📋 Crear Estudio y Cargar Ecografía</h2>
+                    <div style="display: grid; grid-template-columns: 2fr 1fr; gap: 2rem;">
+                        <div>
+                            <div class="form-group">
+                                <label>Seleccionar Paciente *</label>
+                                <select id="h1-patient-select">
+                                    <option value="">-- Seleccione un paciente --</option>
+                                </select>
+                            </div>
+                            <div class="form-group">
+                                <label>Hospital de Origen</label>
+                                <input type="text" id="h1-hospital" value="Hospital Regional Norte - Popayán" readonly>
+                            </div>
+                            <div class="form-group">
+                                <label>Modalidad</label>
+                                <select id="h1-modality">
+                                    <option value="US">US - Ultrasonido</option>
+                                    <option value="CT">CT - Tomografía</option>
+                                    <option value="MR">MR - Resonancia</option>
+                                </select>
+                            </div>
+                            <button class="btn btn-primary" onclick="uploadDICOMH1()">📤 Cargar Archivo DICOM</button>
+                            <input type="file" id="h1-dicom-file" accept=".dcm,.dicom" onchange="handleDICOMUploadH1(event)">
+                            <div id="h1-upload-status" style="margin-top: 1rem; color: var(--text-secondary);"></div>
+                        </div>
+                        <div id="h1-preview" style="background: #000; border-radius: 8px; aspect-ratio: 1; display: flex; align-items: center; justify-content: center; color: var(--text-secondary);">
+                            Vista previa
+                        </div>
+                    </div>
+                    <button class="btn btn-success" style="width: 100%; margin-top: 1rem;" onclick="sendToHospital2()" id="h1-send-btn" disabled>
+                        🚀 ENVIAR AL HOSPITAL #2
+                    </button>
+                </div>
+                
+                <!-- Lista de Estudios -->
+                <div class="section">
+                    <h2>📋 Mis Estudios</h2>
+                    <div class="grid" id="h1-studies-list">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📋</div>
+                            <p>No hay estudios registrados</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Vista de Revisión de Estudio Completado -->
+            <div id="h1-review-view" style="display: none;">
+                <div class="section">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h2>🖼️ Revisión de Estudio Completado</h2>
+                        <button class="btn btn-primary" onclick="backToMainH1()">← Volver a Mis Estudios</button>
+                    </div>
+                    
+                    <div class="viewer-container">
+                        <div class="viewer-main">
+                            <div class="viewer-toolbar">
+                                <button class="btn btn-primary" onclick="setToolH1('Wwwc')">🎨 Ventana</button>
+                                <button class="btn btn-primary" onclick="setToolH1('Zoom')">🔍 Zoom</button>
+                                <button class="btn btn-primary" onclick="setToolH1('Pan')">✋ Pan</button>
+                                <button class="btn btn-primary" onclick="setToolH1('Length')">📏 Medir</button>
+                                <button class="btn btn-primary" onclick="resetViewH1()">↻ Reset</button>
+                            </div>
+                            <div class="viewer-viewport">
+                                <div id="h1-review-viewport" style="width: 512px; height: 512px; background: #000;"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="viewer-sidebar">
+                            <div class="info-group">
+                                <h3>👤 Información del Paciente</h3>
+                                <p><strong>Nombre:</strong> <span id="h1-review-patient-name">-</span></p>
+                                <p><strong>DNI:</strong> <span id="h1-review-patient-dni">-</span></p>
+                                <p><strong>Edad:</strong> <span id="h1-review-patient-age">-</span></p>
+                                <p><strong>Estudio:</strong> <span id="h1-review-study-id">-</span></p>
+                            </div>
+                            
+                            <div class="info-group">
+                                <h3>🎨 Controles</h3>
+                                <div class="slider-control">
+                                    <label>
+                                        <span>Window Center</span>
+                                        <span id="h1-wc-value">-</span>
+                                    </label>
+                                    <input type="range" class="slider" id="h1-window-center" min="-1000" max="4000" value="40" oninput="updateWindowH1()">
+                                </div>
+                                <div class="slider-control">
+                                    <label>
+                                        <span>Window Width</span>
+                                        <span id="h1-ww-value">-</span>
+                                    </label>
+                                    <input type="range" class="slider" id="h1-window-width" min="1" max="4000" value="400" oninput="updateWindowH1()">
+                                </div>
+                            </div>
+                            
+                            <div class="info-group" style="background: rgba(0,191,165,0.1); padding: 1rem; border-radius: 8px; border: 2px solid var(--accent);">
+                                <h3>📋 Diagnóstico del Radiólogo</h3>
+                                <div style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 6px; margin-top: 0.5rem;">
+                                    <p style="margin-bottom: 0.5rem;"><strong>Radiólogo:</strong> <span id="h1-review-radiologist" style="color: var(--accent);">-</span></p>
+                                    <p style="margin-bottom: 0.5rem;"><strong>Fecha:</strong> <span id="h1-review-completed-date">-</span></p>
+                                    <hr style="border: 1px solid var(--border); margin: 1rem 0;">
+                                    <div id="h1-review-observations" style="white-space: pre-wrap; line-height: 1.6; color: var(--text-primary);">-</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== HOSPITAL 2 TAB ==================== -->
+        <div id="tab-hospital2" class="tab-content">
+            <!-- Login Radiólogos -->
+            <div id="h2-login-section" class="section">
+                <h2>👨‍⚕️ Seleccionar Radiólogo</h2>
+                <div class="grid">
+                    <div class="card" onclick="loginRadiologist('Dr. Danilo Ortega')">
+                        <h3>Dr. Danilo Ortega</h3>
+                        <p><strong>Especialidad:</strong> Radiología Abdominal</p>
+                        <p><strong>Pendientes:</strong> <span id="ortega-pending">0</span></p>
+                        <span class="status-badge has-dicom">RADIÓLOGO</span>
+                    </div>
+                    <div class="card" onclick="loginRadiologist('Dra. María Martínez')">
+                        <h3>Dra. María Martínez</h3>
+                        <p><strong>Especialidad:</strong> Ecografía Obstétrica</p>
+                        <p><strong>Pendientes:</strong> <span id="martinez-pending">0</span></p>
+                        <span class="status-badge has-dicom">RADIÓLOGA</span>
+                    </div>
+                    <div class="card" onclick="loginRadiologist('Dr. Carlos Rodríguez')">
+                        <h3>Dr. Carlos Rodríguez</h3>
+                        <p><strong>Especialidad:</strong> Ecografía Cardíaca</p>
+                        <p><strong>Pendientes:</strong> <span id="rodriguez-pending">0</span></p>
+                        <span class="status-badge has-dicom">RADIÓLOGO</span>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Lista de Trabajo -->
+            <div id="h2-worklist-section" style="display: none;">
+                <div class="section">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h2>📋 Lista de Trabajo</h2>
+                        <button class="btn btn-danger" onclick="logoutRadiologist()">🚪 Cerrar Sesión</button>
+                    </div>
+                    <p style="margin-bottom: 1rem; color: var(--text-secondary);">
+                        Radiólogo: <strong id="currentUser" style="color: var(--accent);">-</strong>
+                    </p>
+                    <div class="grid" id="h2-studies-list">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📭</div>
+                            <p>No hay estudios pendientes</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Visor DICOM -->
+            <div id="h2-viewer-section" style="display: none;">
+                <div class="section">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h2>🖼️ Visor DICOM</h2>
+                        <button class="btn btn-primary" onclick="backToWorklistH2()">← Volver a Lista</button>
+                    </div>
+                    
+                    <div class="viewer-container">
+                        <div class="viewer-main">
+                            <div class="viewer-toolbar">
+                                <button class="btn btn-primary" onclick="setToolH2('Wwwc')">🎨 Ventana</button>
+                                <button class="btn btn-primary" onclick="setToolH2('Zoom')">🔍 Zoom</button>
+                                <button class="btn btn-primary" onclick="setToolH2('Pan')">✋ Pan</button>
+                                <button class="btn btn-primary" onclick="setToolH2('Length')">📏 Medir</button>
+                                <button class="btn btn-primary" onclick="resetViewH2()">↻ Reset</button>
+                            </div>
+                            <div class="viewer-viewport">
+                                <div id="h2-viewport" style="width: 512px; height: 512px; background: #000;"></div>
+                            </div>
+                        </div>
+                        
+                        <div class="viewer-sidebar">
+                            <div class="info-group">
+                                <h3>👤 Información del Paciente</h3>
+                                <p><strong>Nombre:</strong> <span id="h2-patient-name">-</span></p>
+                                <p><strong>DNI:</strong> <span id="h2-patient-dni">-</span></p>
+                                <p><strong>Edad:</strong> <span id="h2-patient-age">-</span></p>
+                                <p><strong>Estudio:</strong> <span id="h2-study-id">-</span></p>
+                            </div>
+                            
+                            <div class="info-group">
+                                <h3>🎨 Controles</h3>
+                                <div class="slider-control">
+                                    <label>
+                                        <span>Window Center</span>
+                                        <span id="h2-wc-value">-</span>
+                                    </label>
+                                    <input type="range" class="slider" id="h2-window-center" min="-1000" max="4000" value="40" oninput="updateWindowH2()">
+                                </div>
+                                <div class="slider-control">
+                                    <label>
+                                        <span>Window Width</span>
+                                        <span id="h2-ww-value">-</span>
+                                    </label>
+                                    <input type="range" class="slider" id="h2-window-width" min="1" max="4000" value="400" oninput="updateWindowH2()">
+                                </div>
+                            </div>
+                            
+                            <div class="info-group">
+                                <h3>📝 Observaciones</h3>
+                                <textarea id="h2-observations" rows="6" placeholder="Escribir hallazgos y diagnóstico..." style="width: 100%; padding: 0.8rem; background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: white; border-radius: 6px;"></textarea>
+                                <button class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;" onclick="saveObservationsH2()">💾 Guardar</button>
+                                <button class="btn btn-success" style="width: 100%; margin-top: 0.5rem;" onclick="completeStudyH2()">✅ Completar y Enviar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== ADMIN TAB ==================== -->
+        <div id="tab-admin" class="tab-content">
+            <div class="section">
+                <h2>📊 Estadísticas del Sistema</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Estudios</div>
+                        <div class="stat-value" id="admin-total-studies">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Pendientes</div>
+                        <div class="stat-value" id="admin-pending-studies" style="color: var(--warning);">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Completados</div>
+                        <div class="stat-value" id="admin-completed-studies" style="color: var(--success);">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Total Pacientes</div>
+                        <div class="stat-value" id="admin-total-patients">0</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>📋 Todos los Estudios</h2>
+                <div class="grid" id="admin-studies-list"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <div id="loading-text">Procesando...</div>
+        </div>
+    </div>
+    
+    <script>
+        // ==================== CORNERSTONE INITIALIZATION ====================
+        cornerstoneWADOImageLoader.external.cornerstone = cornerstone;
+        cornerstoneWADOImageLoader.external.dicomParser = dicomParser;
+        cornerstoneTools.external.cornerstone = cornerstone;
+        cornerstoneTools.external.Hammer = Hammer;
+        cornerstoneTools.external.cornerstoneMath = cornerstoneMath;
+        
+        cornerstoneTools.init();
+        cornerstoneTools.addTool(cornerstoneTools.WwwcTool);
+        cornerstoneTools.addTool(cornerstoneTools.ZoomTool);
+        cornerstoneTools.addTool(cornerstoneTools.PanTool);
+        cornerstoneTools.addTool(cornerstoneTools.LengthTool);
+
+        // ==================== INDEXEDDB DATABASE MANAGER ====================
+        class DatabaseManager {
+            constructor() {
+                this.db = null;
+                this.cache = new Map();
+            }
+            
+            async init() {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open('ECO-COL-FINAL-V5', 1);
+                    
+                    request.onupgradeneeded = (e) => {
+                        const db = e.target.result;
+                        
+                        if (!db.objectStoreNames.contains('patients')) {
+                            db.createObjectStore('patients', { keyPath: 'id' });
+                        }
+                        
+                        if (!db.objectStoreNames.contains('studies')) {
+                            db.createObjectStore('studies', { keyPath: 'id' });
+                        }
+                        
+                        if (!db.objectStoreNames.contains('dicom_files')) {
+                            db.createObjectStore('dicom_files', { keyPath: 'studyId' });
+                        }
+                        
+                        console.log('✅ IndexedDB schema created');
+                    };
+                    
+                    request.onsuccess = (e) => {
+                        this.db = e.target.result;
+                        console.log('✅ IndexedDB initialized');
+                        resolve();
+                    };
+                    
+                    request.onerror = () => {
+                        console.error('❌ IndexedDB error:', request.error);
+                        reject(request.error);
+                    };
+                });
+            }
+            
+            // Patients
+            async addPatient(patient) {
+                patient.id = 'PAC-' + String(Date.now()).slice(-8);
+                patient.createdAt = new Date().toISOString();
+                
+                return new Promise((resolve, reject) => {
+                    const tx = this.db.transaction(['patients'], 'readwrite');
+                    const store = tx.objectStore('patients');
+                    const request = store.add(patient);
+                    
+                    request.onsuccess = () => {
+                        console.log(`✅ Patient added: ${patient.id}`);
+                        resolve(patient);
+                    };
+                    
+                    request.onerror = () => reject(request.error);
+                });
+            }
+            
+            async getAllPatients() {
+                return new Promise((resolve, reject) => {
+                    const tx = this.db.transaction(['patients'], 'readonly');
+                    const store = tx.objectStore('patients');
+                    const request = store.getAll();
+                    
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            }
+            
+            async getPatient(id) {
+                return new Promise((resolve, reject) => {
+                    const tx = this.db.transaction(['patients'], 'readonly');
+                    const store = tx.objectStore('patients');
+                    const request = store.get(id);
+                    
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            }
+            
+            // Studies
+            async addStudy(study) {
+                study.id = 'ECO-' + String(Date.now()).slice(-8);
+                study.status = 'pending';
+                study.createdAt = new Date().toISOString();
+                study.radiologist = null;
+                study.observations = '';
+                study.completedAt = null;
+                
+                return new Promise((resolve, reject) => {
+                    const tx = this.db.transaction(['studies'], 'readwrite');
+                    const store = tx.objectStore('studies');
+                    const request = store.add(study);
+                    
+                    request.onsuccess = () => {
+                        console.log(`✅ Study added: ${study.id}`);
+                        resolve(study);
+                    };
+                    
+                    request.onerror = () => reject(request.error);
+                });
+            }
+            
+            async updateStudy(id, updates) {
+                const study = await this.getStudy(id);
+                if (!study) throw new Error(`Study ${id} not found`);
+                
+                Object.assign(study, updates);
+                
+                return new Promise((resolve, reject) => {
+                    const tx = this.db.transaction(['studies'], 'readwrite');
+                    const store = tx.objectStore('studies');
+                    const request = store.put(study);
+                    
+                    request.onsuccess = () => {
+                        console.log(`✅ Study updated: ${id}`);
+                        resolve(study);
+                    };
+                    
+                    request.onerror = () => reject(request.error);
+                });
+            }
+            
+            async getStudy(id) {
+                return new Promise((resolve, reject) => {
+                    const tx = this.db.transaction(['studies'], 'readonly');
+                    const store = tx.objectStore('studies');
+                    const request = store.get(id);
+                    
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            }
+            
+            async getAllStudies() {
+                return new Promise((resolve, reject) => {
+                    const tx = this.db.transaction(['studies'], 'readonly');
+                    const store = tx.objectStore('studies');
+                    const request = store.getAll();
+                    
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            }
+            
+            // DICOM Files
+            async saveDICOMFile(studyId, fileBlob, metadata) {
+                const arrayBuffer = await fileBlob.arrayBuffer();
+                
+                const data = {
+                    studyId,
+                    dicomData: arrayBuffer,
+                    metadata: {
+                        ...metadata,
+                        uploadedAt: new Date().toISOString(),
+                        size: arrayBuffer.byteLength
+                    }
+                };
+                
+                return new Promise((resolve, reject) => {
+                    const tx = this.db.transaction(['dicom_files'], 'readwrite');
+                    const store = tx.objectStore('dicom_files');
+                    const request = store.put(data);
+                    
+                    request.onsuccess = () => {
+                        console.log(`✅ DICOM saved: ${studyId} (${(arrayBuffer.byteLength / 1024).toFixed(2)} KB)`);
+                        this.cache.set('dicom_' + studyId, data);
+                        resolve(data);
+                    };
+                    
+                    request.onerror = () => reject(request.error);
+                });
+            }
+            
+            async getDICOMFile(studyId) {
+                if (this.cache.has('dicom_' + studyId)) {
+                    console.log(`⚡ Cache hit: ${studyId}`);
+                    return this.cache.get('dicom_' + studyId);
+                }
+                
+                return new Promise((resolve, reject) => {
+                    const tx = this.db.transaction(['dicom_files'], 'readonly');
+                    const store = tx.objectStore('dicom_files');
+                    const request = store.get(studyId);
+                    
+                    request.onsuccess = () => {
+                        const data = request.result;
+                        if (data) {
+                            console.log(`✅ DICOM loaded: ${studyId}`);
+                            this.cache.set('dicom_' + studyId, data);
+                        }
+                        resolve(data);
+                    };
+                    
+                    request.onerror = () => reject(request.error);
+                });
+            }
+        }
+
+        const DB = new DatabaseManager();
+        
+        // Global Variables
+        let currentRadiologist = null;
+        let currentH2Study = null;
+        let h2Element = null;
+        let h2ImageIds = [];
+        let h2CurrentIndex = 0;
+        let h1CurrentStudyId = null;
+
+        // ==================== INITIALIZATION ====================
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                showLoading('Inicializando sistema...');
+                await DB.init();
+                hideLoading();
+                notify('✅ Sistema ECO-COL FINAL V5.0 listo', 'success');
+                console.log('✅ System initialized');
+            } catch (error) {
+                hideLoading();
+                notify('❌ Error al inicializar: ' + error.message, 'error');
+                console.error('❌ Init error:', error);
+            }
+        });
+
+        // ==================== HOSPITAL 1 FUNCTIONS ====================
+        
+        // Patient Form
+        document.getElementById('patient-form').addEventListener('submit', async (e) => {
+            e.preventDefault();
+            
+            try {
+                const patient = {
+                    name: document.getElementById('patient-name').value,
+                    dni: document.getElementById('patient-dni').value,
+                    age: document.getElementById('patient-age').value,
+                    gender: document.getElementById('patient-gender').value,
+                    phone: document.getElementById('patient-phone').value
+                };
+                
+                await DB.addPatient(patient);
+                notify('✅ Paciente registrado correctamente', 'success');
+                e.target.reset();
+                await loadH1Patients();
+            } catch (error) {
+                notify('❌ Error: ' + error.message, 'error');
+            }
+        });
+
+        async function loadH1Patients() {
+            const select = document.getElementById('h1-patient-select');
+            const patients = await DB.getAllPatients();
+            
+            select.innerHTML = '<option value="">-- Seleccione un paciente --</option>';
+            patients.forEach(p => {
+                const option = document.createElement('option');
+                option.value = p.id;
+                option.textContent = `${p.name} (${p.dni})`;
+                select.appendChild(option);
+            });
+        }
+
+        function uploadDICOMH1() {
+            const patientId = document.getElementById('h1-patient-select').value;
+            if (!patientId) {
+                notify('⚠️ Seleccione un paciente primero', 'warning');
+                return;
+            }
+            document.getElementById('h1-dicom-file').click();
+        }
+
+        async function handleDICOMUploadH1(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            try {
+                showLoading('Procesando DICOM...');
+                
+                // Register file
+                const baseImageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
+                
+                // Load metadata
+                const image = await cornerstone.loadImage(baseImageId);
+                const numFrames = parseInt(image.data.string('x00280008') || '1');
+                
+                console.log(`✅ DICOM loaded: ${numFrames} frames`);
+                
+                // Create study
+                const patientId = document.getElementById('h1-patient-select').value;
+                const study = {
+                    patientId,
+                    hospital: document.getElementById('h1-hospital').value,
+                    modality: document.getElementById('h1-modality').value,
+                    date: new Date().toISOString().split('T')[0],
+                    hasDICOM: true
+                };
+                
+                const newStudy = await DB.addStudy(study);
+                h1CurrentStudyId = newStudy.id;
+                
+                // Save DICOM file
+                await DB.saveDICOMFile(newStudy.id, file, {
+                    filename: file.name,
+                    numFrames,
+                    baseImageId
+                });
+                
+                document.getElementById('h1-upload-status').innerHTML = `
+                    <strong style="color: var(--success);">✅ DICOM cargado correctamente</strong><br>
+                    Archivo: ${file.name}<br>
+                    Frames: ${numFrames}<br>
+                    Tamaño: ${(file.size / 1024).toFixed(2)} KB
+                `;
+                
+                document.getElementById('h1-send-btn').disabled = false;
+                
+                hideLoading();
+                notify('✅ DICOM procesado correctamente', 'success');
+                
+            } catch (error) {
+                hideLoading();
+                console.error('❌ DICOM upload error:', error);
+                notify('❌ Error: ' + error.message, 'error');
+            }
+        }
+
+        async function sendToHospital2() {
+            if (!h1CurrentStudyId) {
+                notify('⚠️ No hay estudio para enviar', 'warning');
+                return;
+            }
+            
+            try {
+                showLoading('Enviando al Hospital #2...');
+                
+                await DB.updateStudy(h1CurrentStudyId, {
+                    status: 'pending'
+                });
+                
+                notify('✅ Estudio enviado al Hospital #2', 'success');
+                
+                // Reset form
+                document.getElementById('h1-patient-select').value = '';
+                document.getElementById('h1-upload-status').innerHTML = '';
+                document.getElementById('h1-send-btn').disabled = true;
+                h1CurrentStudyId = null;
+                
+                await loadH1Studies();
+                hideLoading();
+                
+            } catch (error) {
+                hideLoading();
+                notify('❌ Error: ' + error.message, 'error');
+            }
+        }
+
+        async function loadH1Studies() {
+            const list = document.getElementById('h1-studies-list');
+            const studies = await DB.getAllStudies();
+            
+            if (studies.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <p>No hay estudios registrados</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            list.innerHTML = '';
+            for (const study of studies) {
+                const patient = await DB.getPatient(study.patientId);
+                const card = document.createElement('div');
+                card.className = 'card';
+                
+                // Si está completado, agregar click para abrir visor
+                if (study.status === 'completed') {
+                    card.onclick = () => openStudyReviewH1(study.id);
+                }
+                
+                card.innerHTML = `
+                    <h3>${study.id}</h3>
+                    <p><strong>Paciente:</strong> ${patient ? patient.name : 'N/A'}</p>
+                    <p><strong>DNI:</strong> ${patient ? patient.dni : 'N/A'}</p>
+                    <p><strong>Hospital:</strong> ${study.hospital}</p>
+                    <p><strong>Fecha:</strong> ${study.date}</p>
+                    <span class="status-badge ${study.status}">${study.status === 'pending' ? '⏳ PENDIENTE' : '✅ COMPLETADO'}</span>
+                    ${study.hasDICOM ? '<span class="status-badge has-dicom">📁 DICOM</span>' : ''}
+                    ${study.status === 'completed' && study.observations ? `
+                        <div style="margin-top: 1rem; padding: 1rem; background: linear-gradient(135deg, rgba(0,191,165,0.15), rgba(0,191,165,0.05)); border-radius: 8px; border-left: 4px solid var(--accent);">
+                            <p style="color: var(--accent); font-weight: 700; margin-bottom: 0.5rem;">📋 Diagnóstico del Radiólogo:</p>
+                            <p style="color: var(--text-primary); margin-bottom: 0.5rem;"><strong>Radiólogo:</strong> ${study.radiologist}</p>
+                            <p style="color: var(--text-secondary); line-height: 1.6; font-style: italic;">"${study.observations.substring(0, 100)}${study.observations.length > 100 ? '...' : ''}"</p>
+                            <button onclick="event.stopPropagation(); openStudyReviewH1('${study.id}')" style="margin-top: 0.8rem; padding: 0.6rem 1.2rem; background: linear-gradient(135deg, var(--primary), #1565c0); color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; transition: all 0.3s; box-shadow: 0 2px 8px rgba(0,0,0,0.3);" onmouseover="this.style.transform='translateY(-2px)'; this.style.boxShadow='0 4px 12px rgba(0,0,0,0.4)'" onmouseout="this.style.transform='translateY(0)'; this.style.boxShadow='0 2px 8px rgba(0,0,0,0.3)'">
+                                🖼️ VER ECOGRAFÍA CON OBSERVACIONES
+                            </button>
+                        </div>
+                    ` : ''}
+                `;
+                list.appendChild(card);
+            }
+        }
+
+        // Variables para Hospital #1 Review
+        let h1ReviewElement = null;
+        let h1ReviewImageIds = [];
+        let h1ReviewCurrentIndex = 0;
+
+        async function openStudyReviewH1(studyId) {
+            try {
+                showLoading('Cargando estudio completo...');
+                
+                const study = await DB.getStudy(studyId);
+                const patient = await DB.getPatient(study.patientId);
+                
+                // Ocultar vista principal y mostrar visor
+                document.getElementById('h1-main-view').style.display = 'none';
+                document.getElementById('h1-review-view').style.display = 'block';
+                
+                // Actualizar información del paciente
+                document.getElementById('h1-review-patient-name').textContent = patient ? patient.name : '-';
+                document.getElementById('h1-review-patient-dni').textContent = patient ? patient.dni : '-';
+                document.getElementById('h1-review-patient-age').textContent = patient ? patient.age : '-';
+                document.getElementById('h1-review-study-id').textContent = study.id;
+                
+                // Actualizar observaciones
+                document.getElementById('h1-review-radiologist').textContent = study.radiologist || '-';
+                document.getElementById('h1-review-completed-date').textContent = study.completedAt ? new Date(study.completedAt).toLocaleString('es-CO') : '-';
+                document.getElementById('h1-review-observations').textContent = study.observations || 'Sin observaciones';
+                
+                // Cargar DICOM
+                const dicomData = await DB.getDICOMFile(studyId);
+                
+                if (!dicomData) {
+                    throw new Error('DICOM no encontrado');
+                }
+                
+                // Reconstruct File
+                const blob = new Blob([dicomData.dicomData], { type: 'application/dicom' });
+                const file = new File([blob], dicomData.metadata.filename, { 
+                    type: 'application/dicom' 
+                });
+                
+                // Register in Cornerstone
+                const baseImageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
+                
+                // Load metadata
+                const image = await cornerstone.loadImage(baseImageId);
+                const numFrames = parseInt(image.data.string('x00280008') || '1');
+                
+                // Generate imageIds
+                h1ReviewImageIds = [];
+                for (let i = 0; i < numFrames; i++) {
+                    h1ReviewImageIds.push(`${baseImageId}&frame=${i}`);
+                }
+                
+                console.log(`✅ H1 Review: Loaded ${h1ReviewImageIds.length} frames`);
+                
+                // Initialize viewport
+                h1ReviewElement = document.getElementById('h1-review-viewport');
+                cornerstone.enable(h1ReviewElement);
+                
+                // Load first frame
+                h1ReviewCurrentIndex = 0;
+                await loadImageH1Review(h1ReviewImageIds[0]);
+                
+                // Setup tools
+                cornerstoneTools.addStackStateManager(h1ReviewElement, ['stack']);
+                cornerstoneTools.addToolState(h1ReviewElement, 'stack', {
+                    imageIds: h1ReviewImageIds,
+                    currentImageIdIndex: 0
+                });
+                
+                hideLoading();
+                notify(`✅ Estudio cargado: ${study.id}`, 'success');
+                
+            } catch (error) {
+                hideLoading();
+                console.error('❌ H1 Review error:', error);
+                notify('❌ Error: ' + error.message, 'error');
+            }
+        }
+
+        async function loadImageH1Review(imageId) {
+            const image = await cornerstone.loadImage(imageId);
+            cornerstone.displayImage(h1ReviewElement, image);
+        }
+
+        function backToMainH1() {
+            document.getElementById('h1-main-view').style.display = 'block';
+            document.getElementById('h1-review-view').style.display = 'none';
+            h1ReviewElement = null;
+            h1ReviewImageIds = [];
+        }
+
+        function setToolH1(toolName) {
+            if (!h1ReviewElement) return;
+            cornerstoneTools.setToolActive(toolName, { mouseButtonMask: 1 });
+        }
+
+        function resetViewH1() {
+            if (!h1ReviewElement) return;
+            cornerstone.reset(h1ReviewElement);
+        }
+
+        function updateWindowH1() {
+            if (!h1ReviewElement) return;
+            
+            const viewport = cornerstone.getViewport(h1ReviewElement);
+            viewport.voi.windowCenter = parseFloat(document.getElementById('h1-window-center').value);
+            viewport.voi.windowWidth = parseFloat(document.getElementById('h1-window-width').value);
+            cornerstone.setViewport(h1ReviewElement, viewport);
+            
+            document.getElementById('h1-wc-value').textContent = viewport.voi.windowCenter.toFixed(0);
+            document.getElementById('h1-ww-value').textContent = viewport.voi.windowWidth.toFixed(0);
+        }
+
+        // ==================== HOSPITAL 2 FUNCTIONS ====================
+        
+        function loginRadiologist(name) {
+            currentRadiologist = name;
+            document.getElementById('currentUser').textContent = name;
+            document.getElementById('h2-login-section').style.display = 'none';
+            document.getElementById('h2-worklist-section').style.display = 'block';
+            loadH2Worklist();
+            notify(`✅ Bienvenido ${name}`, 'success');
+        }
+
+        function logoutRadiologist() {
+            currentRadiologist = null;
+            document.getElementById('h2-login-section').style.display = 'block';
+            document.getElementById('h2-worklist-section').style.display = 'none';
+            document.getElementById('h2-viewer-section').style.display = 'none';
+        }
+
+        async function loadH2Worklist() {
+            const list = document.getElementById('h2-studies-list');
+            const studies = await DB.getAllStudies();
+            const pendingStudies = studies.filter(s => s.status === 'pending' && s.hasDICOM);
+            
+            // Update counters
+            document.getElementById('ortega-pending').textContent = pendingStudies.length;
+            document.getElementById('martinez-pending').textContent = pendingStudies.length;
+            document.getElementById('rodriguez-pending').textContent = pendingStudies.length;
+            
+            if (pendingStudies.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <p>No hay estudios pendientes</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            list.innerHTML = '';
+            for (const study of pendingStudies) {
+                const patient = await DB.getPatient(study.patientId);
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.onclick = () => openStudyH2(study.id);
+                card.innerHTML = `
+                    <h3>${study.id}</h3>
+                    <p><strong>Paciente:</strong> ${patient ? patient.name : 'N/A'}</p>
+                    <p><strong>DNI:</strong> ${patient ? patient.dni : 'N/A'}</p>
+                    <p><strong>Hospital:</strong> ${study.hospital}</p>
+                    <p><strong>Fecha:</strong> ${study.date}</p>
+                    <span class="status-badge pending">PENDIENTE</span>
+                    <span class="status-badge has-dicom">✅ DICOM</span>
+                `;
+                list.appendChild(card);
+            }
+        }
+
+        async function openStudyH2(studyId) {
+            try {
+                showLoading('Cargando estudio...');
+                
+                currentH2Study = await DB.getStudy(studyId);
+                const patient = await DB.getPatient(currentH2Study.patientId);
+                
+                // Show viewer
+                document.getElementById('h2-worklist-section').style.display = 'none';
+                document.getElementById('h2-viewer-section').style.display = 'block';
+                
+                // Update patient info
+                document.getElementById('h2-patient-name').textContent = patient ? patient.name : '-';
+                document.getElementById('h2-patient-dni').textContent = patient ? patient.dni : '-';
+                document.getElementById('h2-patient-age').textContent = patient ? patient.age : '-';
+                document.getElementById('h2-study-id').textContent = currentH2Study.id;
+                document.getElementById('h2-observations').value = currentH2Study.observations || '';
+                
+                // ✅ CRITICAL: Load DICOM from IndexedDB
+                const dicomData = await DB.getDICOMFile(studyId);
+                
+                if (!dicomData) {
+                    throw new Error('DICOM no encontrado');
+                }
+                
+                // Reconstruct File
+                const blob = new Blob([dicomData.dicomData], { type: 'application/dicom' });
+                const file = new File([blob], dicomData.metadata.filename, { 
+                    type: 'application/dicom' 
+                });
+                
+                // Register in Cornerstone
+                const baseImageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
+                
+                // Load metadata
+                const image = await cornerstone.loadImage(baseImageId);
+                const numFrames = parseInt(image.data.string('x00280008') || '1');
+                
+                // Generate imageIds with CORRECT format
+                h2ImageIds = [];
+                for (let i = 0; i < numFrames; i++) {
+                    h2ImageIds.push(`${baseImageId}&frame=${i}`);  // ✅ Using & not ?
+                }
+                
+                console.log(`✅ Loaded ${h2ImageIds.length} frames`);
+                
+                // Initialize viewport
+                h2Element = document.getElementById('h2-viewport');
+                cornerstone.enable(h2Element);
+                
+                // Load first frame
+                h2CurrentIndex = 0;
+                await loadImageH2(h2ImageIds[0]);
+                
+                // Setup tools
+                cornerstoneTools.addStackStateManager(h2Element, ['stack']);
+                cornerstoneTools.addToolState(h2Element, 'stack', {
+                    imageIds: h2ImageIds,
+                    currentImageIdIndex: 0
+                });
+                
+                hideLoading();
+                notify(`✅ Estudio cargado (${h2ImageIds.length} frames)`, 'success');
+                
+            } catch (error) {
+                hideLoading();
+                console.error('❌ Open study error:', error);
+                notify('❌ Error: ' + error.message, 'error');
+            }
+        }
+
+        async function loadImageH2(imageId) {
+            const image = await cornerstone.loadImage(imageId);
+            cornerstone.displayImage(h2Element, image);
+        }
+
+        function backToWorklistH2() {
+            document.getElementById('h2-worklist-section').style.display = 'block';
+            document.getElementById('h2-viewer-section').style.display = 'none';
+            currentH2Study = null;
+            h2ImageIds = [];
+        }
+
+        function setToolH2(toolName) {
+            if (!h2Element) return;
+            
+            cornerstoneTools.setToolActive(toolName, { mouseButtonMask: 1 });
+        }
+
+        function resetViewH2() {
+            if (!h2Element) return;
+            cornerstone.reset(h2Element);
+        }
+
+        function updateWindowH2() {
+            if (!h2Element) return;
+            
+            const viewport = cornerstone.getViewport(h2Element);
+            viewport.voi.windowCenter = parseFloat(document.getElementById('h2-window-center').value);
+            viewport.voi.windowWidth = parseFloat(document.getElementById('h2-window-width').value);
+            cornerstone.setViewport(h2Element, viewport);
+            
+            document.getElementById('h2-wc-value').textContent = viewport.voi.windowCenter.toFixed(0);
+            document.getElementById('h2-ww-value').textContent = viewport.voi.windowWidth.toFixed(0);
+        }
+
+        async function saveObservationsH2() {
+            if (!currentH2Study) return;
+            
+            try {
+                const observations = document.getElementById('h2-observations').value;
+                await DB.updateStudy(currentH2Study.id, {
+                    observations,
+                    radiologist: currentRadiologist
+                });
+                notify('✅ Observaciones guardadas', 'success');
+            } catch (error) {
+                notify('❌ Error: ' + error.message, 'error');
+            }
+        }
+
+        async function completeStudyH2() {
+            if (!currentH2Study) return;
+            
+            const observations = document.getElementById('h2-observations').value;
+            if (!observations.trim()) {
+                notify('⚠️ Agregue observaciones primero', 'warning');
+                return;
+            }
+            
+            if (!confirm('¿Completar estudio y enviar al Hospital #1?')) return;
+            
+            try {
+                showLoading('Completando estudio...');
+                
+                await DB.updateStudy(currentH2Study.id, {
+                    status: 'completed',
+                    observations,
+                    radiologist: currentRadiologist,
+                    completedAt: new Date().toISOString()
+                });
+                
+                notify('✅ Estudio completado y enviado al Hospital #1', 'success');
+                
+                backToWorklistH2();
+                await loadH2Worklist();
+                hideLoading();
+                
+            } catch (error) {
+                hideLoading();
+                notify('❌ Error: ' + error.message, 'error');
+            }
+        }
+
+        // ==================== ADMIN FUNCTIONS ====================
+        
+        async function loadAdminData() {
+            const studies = await DB.getAllStudies();
+            const patients = await DB.getAllPatients();
+            
+            document.getElementById('admin-total-studies').textContent = studies.length;
+            document.getElementById('admin-pending-studies').textContent = studies.filter(s => s.status === 'pending').length;
+            document.getElementById('admin-completed-studies').textContent = studies.filter(s => s.status === 'completed').length;
+            document.getElementById('admin-total-patients').textContent = patients.length;
+            
+            const list = document.getElementById('admin-studies-list');
+            list.innerHTML = '';
+            
+            for (const study of studies) {
+                const patient = await DB.getPatient(study.patientId);
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <h3>${study.id}</h3>
+                    <p><strong>Paciente:</strong> ${patient ? patient.name : 'N/A'}</p>
+                    <p><strong>Hospital:</strong> ${study.hospital}</p>
+                    <p><strong>Fecha:</strong> ${study.date}</p>
+                    <p><strong>Radiólogo:</strong> ${study.radiologist || 'Pendiente'}</p>
+                    <span class="status-badge ${study.status}">${study.status.toUpperCase()}</span>
+                `;
+                list.appendChild(card);
+            }
+        }
+
+        // ==================== TAB SWITCHING ====================
+        
+        async function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            
+            document.getElementById('tab-' + tabName).classList.add('active');
+            event.target.classList.add('active');
+            
+            if (tabName === 'hospital1') {
+                await loadH1Patients();
+                await loadH1Studies();
+            } else if (tabName === 'admin') {
+                await loadAdminData();
+            }
+        }
+
+        // ==================== UTILITIES ====================
+        
+        function showLoading(text) {
+            document.getElementById('loading-text').textContent = text;
+            document.getElementById('loading-overlay').style.display = 'flex';
+        }
+        
+        function hideLoading() {
+            document.getElementById('loading-overlay').style.display = 'none';
+        }
+        
+        function notify(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.opacity = '0';
+                setTimeout(() => notification.remove(), 300);
+            }, 4000);
+        }
+    </script>
+</body>
+</html>

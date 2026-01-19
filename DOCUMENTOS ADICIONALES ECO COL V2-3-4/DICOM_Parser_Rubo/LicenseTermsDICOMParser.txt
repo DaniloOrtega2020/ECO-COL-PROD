@@ -1,0 +1,29 @@
+Rubo Medical Imaging BV, 'Rubo DICOM Parser'
+
+END-USER LICENSE AGREEMENT
+
+READ CAREFULLY: This End-User License Agreement ("EULA") is a legal agreement between you (either an individual or a single entity) and Rubo Medical Imaging BV for the 'Rubo DICOM Parser', which includes computer software including demo and may include associated media, printed materials and 'on-line' or electronic documentation ("Product"). An agreement or addendum to this EULA may accompany the Product. You agree to be bound by the terms of this EULA by installing, copying or otherwise using the product. If you do NOT agree, do NOT install or use the Product. You may return it to your place of purchase for a full refund.
+
+1. Grant of license. Rubo Medical Imaging BV grants you the following rights provided that you comply with all terms and conditions of this EULA:
+  -Installation and use. You may install the Product on a hard disk or other storage device.
+  -Backup. You may make copies of the Product for archive or backup purposes.
+  -Reservation of rights. Rubo Medical Imaging BV reserves all rights not expressly granted to you in this EULA.
+  -This license does not entitle you to receive from Rubo Medical Imaging BV any technical support, telephone assistance, or enhancements or updates to the Product.
+
+2. Termination. Without prejudice to any other rights, Rubo Medical Imaging BV may cancel this EULA if you do not abide by the terms and conditions of this EULA.
+
+3. Not for resale software. This Product may not be resold, transferred or used for any other purpose other than demonstration, test or evaluation unless specifically agreed otherwise (Distributor).
+
+4. Disclaimer. The Product is distributed 'as is' and without warranties as to performance unless specifically expressed or implied. Any liability of the seller will be limited exclusively to product replacements or refund of purchase price. Any illegal use of the Product or it's hardware protection will be treated as software piracy.
+
+5. Exclusion of incidental, consequential and certain other damages, to the maximum extent permitted by applicable law, in no event shall Rubo Medical Imaging BV or its suppliers be liable for any special, incidental, indirect or consequential damages whatsoever (including, but not limited to, damages for loss of profits or confidential or other information, for business interruption, for personal injury, for loss of privacy, for failure to meet and duty including good faith or of reasonable care, for negligence, and for any other pecuniary or other loss whatsoever) arising out of or in any way related to the use of or inability to use the Product, the provision of or failure to provide support services, or otherwise under or in connection with any provision of this EULA, even in the event of fault, tort (including negligence), strict liability, breach of contract or breach of warranty of Rubo Medical Imaging BV or any supplier, and even if Rubo Medical Imaging BV or any supplier has been advised of the possibility of such damages.
+
+6. Privacy. The software does not collect any information about its use, nor about the user, nor about any medical data the software is capable of decoding.
+
+7. Applicable law. This agreement will solely be governed by the laws of the Netherlands. This EULA will not be governed by the United Convention on Contract for the International Sal of Goods, the application of which is expressly excluded. If any part of this EULA is found void and unenforceable, it will not affect the validity of the balance of the EULA, which shall remain valid and enforceable according to its terms.
+
+8. Agreement in English. You and Rubo Medical Imaging BV agree that this EULA and all related documents may be written in the English language.
+
+9. Acknowledgment. You hereby accept the terms of this Agreement and acknowledge the terms herein. By using the software and/or obtaining a license, you acknowledge that you have read, understand and agree to all of the terms, conditions, obligations and limitations of this Agreement.
+
+10. Copyright notice. Copyright (c) 1999,2025 Rubo Medical Imaging BV. All rights reserved. The Product is the property of Rubo Medical Imaging BV and is protected by copyright and other intellectual property laws and treaties. Any reproduction or in whole or in part is strictly prohibited.

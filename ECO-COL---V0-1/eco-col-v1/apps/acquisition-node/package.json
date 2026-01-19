@@ -1,0 +1,10 @@
+{
+  "name": "eco-col-acquisition-node",
+  "version": "0.1.0",
+  "description": "ECO-COL V1 - acquisition-node",
+  "main": "dist/main/index.js",
+  "scripts": {
+    "dev": "echo 'Dev mode - FASE 0 stub'",
+    "build": "echo 'Build - FASE 0 stub'"
+  }
+}

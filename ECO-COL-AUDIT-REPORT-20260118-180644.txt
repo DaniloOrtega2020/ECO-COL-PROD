@@ -1,0 +1,766 @@
+╔═══════════════════════════════════════════════════════════════════════════╗
+║                  🔍 ECO-COL CODE AUDIT REPORT                             ║
+║                  Generated: $(date)                                       ║
+╚═══════════════════════════════════════════════════════════════════════════╝
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+1. ESTRUCTURA DE CARPETAS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+.
+./DOCUMENTOS ADICIONALES ECO COL V2-3-4
+./DOCUMENTOS ADICIONALES ECO COL V2-3-4/DICOM_Parser_Rubo
+./DOCUMENTOS ADICIONALES ECO COL V2-3-4/DOCS
+./DOCUMENTOS ADICIONALES ECO COL V2-3-4/dicom_viewer_0020
+./DOCUMENTOS ADICIONALES ECO COL V2-3-4/ecocol-pro-v4
+./DOCUMENTOS ADICIONALES ECO COL V2-3-4/files30
+./ECO-COL VERSION FINAL V5
+./ECO-COL---V0-1
+./ECO-COL---V0-1/FASES
+./ECO-COL---V0-1/backend
+./ECO-COL---V0-1/backend/node_modules
+./ECO-COL---V0-1/backend/uploads
+./ECO-COL---V0-1/eco-col-v1
+./ECO-COL---V0-1/eco-col-v1/apps
+./ECO-COL---V0-1/eco-col-v1/crates
+./ECO-COL---V0-1/eco-col-v1/data
+./ECO-COL---V0-1/eco-col-v1/docs
+./ECO-COL---V0-1/eco-col-v1/scripts
+./ECO-COL---V0-1/eco-col-v1/sql
+./ECOGRAFIAS DICOM 
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+2. ARCHIVOS HTML ENCONTRADOS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📄 Archivo #1: ./ECO-COL---V0-1/ECO-COL-FASE3-COMPLETO.html
+   └─ Líneas:     1426
+   └─ Modificado: 2026-01-18 00:59
+   └─ 🔬 Usa dicom-parser
+   └─ 💾 Usa localStorage
+   └─ 🔐 Tiene sistema de login
+   └─ 🏥 Tiene carga de DICOM
+   └─ 🎬 Tiene controles de cine
+
+📄 Archivo #2: ./ECO-COL---V0-1/ECO-COL-CON-BACKEND.html
+   └─ Líneas:      229
+   └─ Modificado: 2026-01-17 20:27
+   └─ 🔬 Usa dicom-parser
+   └─ 💾 Usa localStorage
+   └─ 🔐 Tiene sistema de login
+   └─ 🏥 Tiene carga de DICOM
+
+📄 Archivo #3: ./ECO-COL---V0-1/ECO-COL-BACKEND-COMPLETO.html
+   └─ Líneas:      567
+   └─ Modificado: 2026-01-17 20:36
+   └─ 🔬 Usa dicom-parser
+   └─ 💾 Usa localStorage
+   └─ 🔐 Tiene sistema de login
+   └─ 🏥 Tiene carga de DICOM
+
+📄 Archivo #4: ./ECO-COL---V0-1/ECO-COLECO-COL-CON-BACKEND.html
+   └─ Líneas:        0
+   └─ Modificado: 2026-01-17 20:28
+
+📄 Archivo #5: ./ECO-COL---V0-1/index-completo.html
+   └─ Líneas:      617
+   └─ Modificado: 2026-01-17 02:41
+   └─ 🏥 Tiene carga de DICOM
+   └─ 🎬 Tiene controles de cine
+
+📄 Archivo #6: ./ECO-COL---V0-1/ECO-COL-FINAL-INTEGRADO.html
+   └─ Líneas:     1380
+   └─ Modificado: 2026-01-17 19:29
+   └─ 🔬 Usa dicom-parser
+   └─ 💾 Usa localStorage
+   └─ 🔐 Tiene sistema de login
+   └─ 🏥 Tiene carga de DICOM
+   └─ 🎬 Tiene controles de cine
+
+📄 Archivo #7: ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/eco-col-parser-mejorado.html
+   └─ Líneas:      483
+   └─ Modificado: 2026-01-17 17:55
+   └─ 🔬 Usa dicom-parser
+   └─ 🏥 Tiene carga de DICOM
+   └─ 🎬 Tiene controles de cine
+
+📄 Archivo #8: ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/eco-col-final-completo.html
+   └─ Líneas:      503
+   └─ Modificado: 2026-01-17 02:59
+   └─ 🔬 Usa Cornerstone.js
+   └─ 🔬 Usa dicom-parser
+   └─ 🔐 Tiene sistema de login
+   └─ 🏥 Tiene carga de DICOM
+   └─ 🎬 Tiene controles de cine
+
+📄 Archivo #9: ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/ECO-COL-TELERADIOLOGIA-COMPLETO.html
+   └─ Líneas:      748
+   └─ Modificado: 2026-01-17 18:37
+   └─ 🔬 Usa dicom-parser
+   └─ 💾 Usa localStorage
+   └─ 🔐 Tiene sistema de login
+   └─ 🏥 Tiene carga de DICOM
+   └─ 🎬 Tiene controles de cine
+
+📄 Archivo #10: ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/ECO-COL-FINAL-OPTIMIZADO.html
+   └─ Líneas:      469
+   └─ Modificado: 2026-01-17 18:04
+   └─ 🔬 Usa dicom-parser
+   └─ 🏥 Tiene carga de DICOM
+   └─ 🎬 Tiene controles de cine
+
+📄 Archivo #11: ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/ECO-COL-DEMO-USUARIOS.html
+   └─ Líneas:      589
+   └─ Modificado: 2026-01-17 18:26
+   └─ 🔬 Usa dicom-parser
+   └─ 🔐 Tiene sistema de login
+   └─ 🏥 Tiene carga de DICOM
+   └─ 🎬 Tiene controles de cine
+
+📄 Archivo #12: ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/files30/ECO-COL-FASE3-COMPLETO.html
+   └─ Líneas:     1426
+   └─ Modificado: 2026-01-18 00:59
+   └─ 🔬 Usa dicom-parser
+   └─ 💾 Usa localStorage
+   └─ 🔐 Tiene sistema de login
+   └─ 🏥 Tiene carga de DICOM
+   └─ 🎬 Tiene controles de cine
+
+📄 Archivo #13: ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/ECO-COL-PRO-V4.1-FIXED.html
+   └─ Líneas:     2213
+   └─ Modificado: 2026-01-18 14:18
+   └─ 🔬 Usa Cornerstone.js
+   └─ 🔬 Usa dicom-parser
+   └─ 💾 Usa localStorage
+   └─ 🔐 Tiene sistema de login
+   └─ 🏥 Tiene carga de DICOM
+   └─ 🎬 Tiene controles de cine
+
+📄 Archivo #14: ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/diagrama-eco-col-arquitectura.html
+   └─ Líneas:      443
+   └─ Modificado: 2026-01-17 18:19
+   └─ 🔬 Usa dicom-parser
+
+📄 Archivo #15: ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/ECO-COL-BACKEND-COMPLETO.html
+   └─ Líneas:      567
+   └─ Modificado: 2026-01-17 20:36
+   └─ 🔬 Usa dicom-parser
+   └─ 💾 Usa localStorage
+   └─ 🔐 Tiene sistema de login
+   └─ 🏥 Tiene carga de DICOM
+
+📄 Archivo #16: ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/ECO-COL-PRO-V4.0-FINAL.html
+   └─ Líneas:     2157
+   └─ Modificado: 2026-01-18 13:55
+   └─ 🔬 Usa Cornerstone.js
+   └─ 🔬 Usa dicom-parser
+   └─ 💾 Usa localStorage
+   └─ 🔐 Tiene sistema de login
+   └─ 🏥 Tiene carga de DICOM
+   └─ 🎬 Tiene controles de cine
+
+📄 Archivo #17: ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/ecocol-pro-v4/ECO-COL-PRO-V4.0-FINAL.html
+   └─ Líneas:     2157
+   └─ Modificado: 2026-01-18 13:54
+   └─ 🔬 Usa Cornerstone.js
+   └─ 🔬 Usa dicom-parser
+   └─ 💾 Usa localStorage
+   └─ 🔐 Tiene sistema de login
+   └─ 🏥 Tiene carga de DICOM
+   └─ 🎬 Tiene controles de cine
+
+📄 Archivo #18: ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/ECO-COL-SISTEMA-PROFESIONAL-DEFINITIVO.html
+   └─ Líneas:     2157
+   └─ Modificado: 2026-01-18 13:31
+   └─ 🔬 Usa Cornerstone.js
+   └─ 🔬 Usa dicom-parser
+   └─ 💾 Usa localStorage
+   └─ 🔐 Tiene sistema de login
+   └─ 🏥 Tiene carga de DICOM
+   └─ 🎬 Tiene controles de cine
+
+📄 Archivo #19: ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/visor-dicom-funcional.html
+   └─ Líneas:      755
+   └─ Modificado: 2026-01-18 13:13
+   └─ 🔬 Usa Cornerstone.js
+   └─ 🔬 Usa dicom-parser
+
+📄 Archivo #20: ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/index-completo.html
+   └─ Líneas:      617
+   └─ Modificado: 2026-01-17 02:50
+   └─ 🏥 Tiene carga de DICOM
+   └─ 🎬 Tiene controles de cine
+
+📄 Archivo #21: ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/ECO-COL-FUNCIONAL-COMPLETO.html
+   └─ Líneas:      654
+   └─ Modificado: 2026-01-17 18:10
+   └─ 🔬 Usa dicom-parser
+   └─ 🏥 Tiene carga de DICOM
+
+📄 Archivo #22: ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/ECO-COL-PRO-V4.2-FINAL.html
+   └─ Líneas:     2213
+   └─ Modificado: 2026-01-18 14:19
+   └─ 🔬 Usa Cornerstone.js
+   └─ 🔬 Usa dicom-parser
+   └─ 💾 Usa localStorage
+   └─ 🔐 Tiene sistema de login
+   └─ 🏥 Tiene carga de DICOM
+   └─ 🎬 Tiene controles de cine
+
+📄 Archivo #23: ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/ECO-COL-SISTEMA-COMPLETO.html
+   └─ Líneas:     1038
+   └─ Modificado: 2026-01-17 18:47
+   └─ 🔬 Usa dicom-parser
+   └─ 💾 Usa localStorage
+   └─ 🔐 Tiene sistema de login
+   └─ 🏥 Tiene carga de DICOM
+
+📄 Archivo #24: ./ECO-COL VERSION FINAL V5/ECO-COL-ULTIMATE-V6.0-FUSION.html
+   └─ Líneas:     2047
+   └─ Modificado: 2026-01-18 15:55
+   └─ 🔬 Usa Cornerstone.js
+   └─ 🔬 Usa dicom-parser
+   └─ 💾 Usa IndexedDB
+   └─ 🔐 Tiene sistema de login
+   └─ 🏥 Tiene carga de DICOM
+   └─ 🎬 Tiene controles de cine
+
+📄 Archivo #25: ./ECO-COL VERSION FINAL V5/ECO-COL-FINAL-V5.0-COMPLETO.html
+   └─ Líneas:     1357
+   └─ Modificado: 2026-01-18 15:15
+   └─ 🔬 Usa Cornerstone.js
+   └─ 🔬 Usa dicom-parser
+   └─ 💾 Usa IndexedDB
+   └─ 🔐 Tiene sistema de login
+   └─ 🏥 Tiene carga de DICOM
+
+📄 Archivo #26: ./ECO-COL VERSION FINAL V5/ECO-COL-FINAL-V5.1-MEJORADO.html
+   └─ Líneas:     1747
+   └─ Modificado: 2026-01-18 15:33
+   └─ 🔬 Usa Cornerstone.js
+   └─ 🔬 Usa dicom-parser
+   └─ 💾 Usa IndexedDB
+   └─ 🔐 Tiene sistema de login
+   └─ 🏥 Tiene carga de DICOM
+
+Total archivos HTML:       26
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+3. SCRIPTS BASH (.sh)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+🔧 ./eco-col-auditor.sh
+   └─ Líneas:      502
+   └─ ✅ Ejecutable
+   └─ 📦 Instalador de 
+   └─ 🦀 Compila código Rust
+   └─ 🔔 Sistema de notificaciones
+
+🔧 ./ECO-COL---V0-1/init-eco-col-platform.sh
+   └─ Líneas:     1311
+   └─ ⚠️  No ejecutable
+   └─ 🔔 Sistema de notificaciones
+
+🔧 ./ECO-COL---V0-1/FASES/install_fase_11.sh
+   └─ Líneas:      945
+   └─ ✅ Ejecutable
+   └─ 📦 Instalador de FASE 11
+   └─ 🔔 Sistema de notificaciones
+
+🔧 ./ECO-COL---V0-1/FASES/install-fase-4.sh
+   └─ Líneas:      414
+   └─ ⚠️  No ejecutable
+   └─ 📦 Instalador de FASE 4
+   └─ 🦀 Compila código Rust
+   └─ 🔔 Sistema de notificaciones
+
+🔧 ./ECO-COL---V0-1/FASES/install-fase-1.sh
+   └─ Líneas:      968
+   └─ ✅ Ejecutable
+   └─ 📦 Instalador de FASE 1
+   └─ 🦀 Compila código Rust
+
+🔧 ./ECO-COL---V0-1/FASES/install_fase_10.sh
+   └─ Líneas:      761
+   └─ ✅ Ejecutable
+   └─ 📦 Instalador de FASE 10
+   └─ 🔔 Sistema de notificaciones
+
+🔧 ./ECO-COL---V0-1/FASES/install-maestro-macos0-6.sh
+   └─ Líneas:      980
+   └─ ⚠️  No ejecutable
+   └─ 📦 Instalador de FASE 6
+   └─ 🦀 Compila código Rust
+   └─ 🔔 Sistema de notificaciones
+
+🔧 ./ECO-COL---V0-1/FASES/install-fase-5.sh
+   └─ Líneas:      929
+   └─ ⚠️  No ejecutable
+   └─ 📦 Instalador de FASE 5
+   └─ 🦀 Compila código Rust
+
+🔧 ./ECO-COL---V0-1/FASES/install-simple-macos.sh
+   └─ Líneas:      746
+   └─ ⚠️  No ejecutable
+   └─ 📦 Instalador de FASE 6
+   └─ 🦀 Compila código Rust
+   └─ 🔔 Sistema de notificaciones
+
+🔧 ./ECO-COL---V0-1/FASES/install-eco-col.sh
+   └─ Líneas:      575
+   └─ ✅ Ejecutable
+   └─ 📦 Instalador de FASE 0
+   └─ 🦀 Compila código Rust
+   └─ 🔔 Sistema de notificaciones
+
+🔧 ./ECO-COL---V0-1/FASES/install_fase_8.sh
+   └─ Líneas:     1081
+   └─ ✅ Ejecutable
+   └─ 📦 Instalador de FASE 8
+   └─ 🦀 Compila código Rust
+   └─ 🔔 Sistema de notificaciones
+
+🔧 ./ECO-COL---V0-1/FASES/install-fase-2.sh
+   └─ Líneas:      334
+   └─ ⚠️  No ejecutable
+   └─ 📦 Instalador de FASE 2
+   └─ 🦀 Compila código Rust
+
+🔧 ./ECO-COL---V0-1/FASES/install_fase_13.sh
+   └─ Líneas:     1505
+   └─ ✅ Ejecutable
+   └─ 📦 Instalador de FASE 13
+   └─ 🦀 Compila código Rust
+   └─ 🔔 Sistema de notificaciones
+
+🔧 ./ECO-COL---V0-1/FASES/install-fase-6.sh
+   └─ Líneas:     1069
+   └─ ⚠️  No ejecutable
+   └─ 📦 Instalador de FASE 6
+   └─ 🦀 Compila código Rust
+   └─ 🔔 Sistema de notificaciones
+
+🔧 ./ECO-COL---V0-1/FASES/install-completo-0-7.sh
+   └─ Líneas:      989
+   └─ ⚠️  No ejecutable
+   └─ 📦 Instalador de FASE 0
+   └─ 🦀 Compila código Rust
+   └─ 🔔 Sistema de notificaciones
+
+🔧 ./ECO-COL---V0-1/FASES/install_fase_12.sh
+   └─ Líneas:     1028
+   └─ ✅ Ejecutable
+   └─ 📦 Instalador de FASE 12
+
+🔧 ./ECO-COL---V0-1/FASES/install-fase-7.sh
+   └─ Líneas:      896
+   └─ ✅ Ejecutable
+   └─ 📦 Instalador de FASE 7
+   └─ 🦀 Compila código Rust
+   └─ 🔔 Sistema de notificaciones
+
+🔧 ./ECO-COL---V0-1/FASES/install_fase_9.sh
+   └─ Líneas:      385
+   └─ ✅ Ejecutable
+   └─ 📦 Instalador de FASE 9
+   └─ 🦀 Compila código Rust
+   └─ 🔔 Sistema de notificaciones
+
+🔧 ./ECO-COL---V0-1/FASES/install-fase-3.sh
+   └─ Líneas:      398
+   └─ ⚠️  No ejecutable
+   └─ 📦 Instalador de FASE 3
+   └─ 🦀 Compila código Rust
+
+🔧 ./ECO-COL---V0-1/INSTALAR-ECO-COL.sh
+   └─ Líneas:      641
+   └─ ✅ Ejecutable
+   └─ 🔔 Sistema de notificaciones
+
+🔧 ./ECO-COL---V0-1/install_fase_12.sh
+   └─ Líneas:     1028
+   └─ ⚠️  No ejecutable
+   └─ 📦 Instalador de FASE 12
+
+🔧 ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/INSTALAR-FIX-FINAL.sh
+   └─ Líneas:       84
+   └─ ⚠️  No ejecutable
+
+🔧 ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/INSTALAR-ECO-COL.sh
+   └─ Líneas:      641
+   └─ ⚠️  No ejecutable
+   └─ 🔔 Sistema de notificaciones
+
+🔧 ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/install_fase_9.sh
+   └─ Líneas:      385
+   └─ ⚠️  No ejecutable
+   └─ 📦 Instalador de FASE 9
+   └─ 🦀 Compila código Rust
+   └─ 🔔 Sistema de notificaciones
+
+Total scripts Bash:       24
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+4. ARCHIVOS DE DOCUMENTACIÓN (.txt)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+📝 ./ECO-COL-AUDIT-REPORT-20260118-180644.txt
+   └─ Líneas:      410
+   └─ 💻 Documentación de script
+
+📝 ./ECO-COL---V0-1/backend/node_modules/bcryptjs/tests/quickbrown.txt
+   └─ Líneas:      150
+
+📝 ./ECO-COL---V0-1/backend/node_modules/buffer-equal-constant-time/LICENSE.txt
+   └─ Líneas:       12
+
+📝 ./ECO-COL---V0-1/backend/node_modules/mkdirp/bin/usage.txt
+   └─ Líneas:       12
+
+📝 ./ECO-COL---V0-1/eco_col_final_analysis.txt
+   └─ Líneas:      383
+   └─ 📊 Documento de análisis
+
+📝 ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/COMO-USAR-EL-NUEVO-ARCHIVO.txt
+   └─ Líneas:       52
+
+📝 ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/DICOM_Parser_Rubo/LicenseTermsDICOMParser.txt
+   └─ Líneas:       28
+
+📝 ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/eco_col_final_analysis.txt
+   └─ Líneas:      383
+   └─ 📊 Documento de análisis
+
+📝 ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/README.txt
+   └─ Líneas:      100
+   └─ 📖 Manual de usuario
+
+📝 ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/DEBUG_REPORT.txt
+   └─ Líneas:       56
+
+Total archivos TXT:       10
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+5. ARCHIVOS EN PRODUCCIÓN (Funcionales)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Criterios: Archivos con mayor líneas de código, funciones completas,
+           librerías modernas (Cornerstone), IndexedDB, y fecha reciente
+
+📊 SCORE: 54 - ./ECO-COL---V0-1/ECO-COL-FASE3-COMPLETO.html
+   └─ Líneas:     1426
+   └─ ⚠️  CANDIDATO SECUNDARIO
+
+📊 SCORE: 22 - ./ECO-COL---V0-1/ECO-COL-CON-BACKEND.html
+   └─ Líneas:      229
+   └─ ❌ PROBABLEMENTE OBSOLETO
+
+📊 SCORE: 25 - ./ECO-COL---V0-1/ECO-COL-BACKEND-COMPLETO.html
+   └─ Líneas:      567
+   └─ ❌ PROBABLEMENTE OBSOLETO
+
+📊 SCORE: 0 - ./ECO-COL---V0-1/ECO-COLECO-COL-CON-BACKEND.html
+   └─ Líneas:        0
+   └─ ❌ PROBABLEMENTE OBSOLETO
+
+📊 SCORE: 26 - ./ECO-COL---V0-1/index-completo.html
+   └─ Líneas:      617
+   └─ ❌ PROBABLEMENTE OBSOLETO
+
+📊 SCORE: 63 - ./ECO-COL---V0-1/ECO-COL-FINAL-INTEGRADO.html
+   └─ Líneas:     1380
+   └─ ⚠️  CANDIDATO SECUNDARIO
+
+📊 SCORE: 24 - ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/eco-col-parser-mejorado.html
+   └─ Líneas:      483
+   └─ ❌ PROBABLEMENTE OBSOLETO
+
+📊 SCORE: 105 - ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/eco-col-final-completo.html
+   └─ Líneas:      503
+   └─ ✅ CANDIDATO A PRODUCCIÓN
+
+📊 SCORE: 47 - ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/ECO-COL-TELERADIOLOGIA-COMPLETO.html
+   └─ Líneas:      748
+   └─ ❌ PROBABLEMENTE OBSOLETO
+
+📊 SCORE: 34 - ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/ECO-COL-FINAL-OPTIMIZADO.html
+   └─ Líneas:      469
+   └─ ❌ PROBABLEMENTE OBSOLETO
+
+📊 SCORE: 45 - ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/ECO-COL-DEMO-USUARIOS.html
+   └─ Líneas:      589
+   └─ ❌ PROBABLEMENTE OBSOLETO
+
+📊 SCORE: 54 - ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/files30/ECO-COL-FASE3-COMPLETO.html
+   └─ Líneas:     1426
+   └─ ⚠️  CANDIDATO SECUNDARIO
+
+📊 SCORE: 112 - ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/ECO-COL-PRO-V4.1-FIXED.html
+   └─ Líneas:     2213
+   └─ ✅ CANDIDATO A PRODUCCIÓN
+
+📊 SCORE: 4 - ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/diagrama-eco-col-arquitectura.html
+   └─ Líneas:      443
+   └─ ❌ PROBABLEMENTE OBSOLETO
+
+📊 SCORE: 25 - ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/ECO-COL-BACKEND-COMPLETO.html
+   └─ Líneas:      567
+   └─ ❌ PROBABLEMENTE OBSOLETO
+
+📊 SCORE: 121 - ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/ECO-COL-PRO-V4.0-FINAL.html
+   └─ Líneas:     2157
+   └─ ✅ CANDIDATO A PRODUCCIÓN
+
+📊 SCORE: 121 - ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/ecocol-pro-v4/ECO-COL-PRO-V4.0-FINAL.html
+   └─ Líneas:     2157
+   └─ ✅ CANDIDATO A PRODUCCIÓN
+
+📊 SCORE: 111 - ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/ECO-COL-SISTEMA-PROFESIONAL-DEFINITIVO.html
+   └─ Líneas:     2157
+   └─ ✅ CANDIDATO A PRODUCCIÓN
+
+📊 SCORE: 57 - ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/visor-dicom-funcional.html
+   └─ Líneas:      755
+   └─ ⚠️  CANDIDATO SECUNDARIO
+
+📊 SCORE: 26 - ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/index-completo.html
+   └─ Líneas:      617
+   └─ ❌ PROBABLEMENTE OBSOLETO
+
+📊 SCORE: 6 - ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/ECO-COL-FUNCIONAL-COMPLETO.html
+   └─ Líneas:      654
+   └─ ❌ PROBABLEMENTE OBSOLETO
+
+📊 SCORE: 122 - ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/ECO-COL-PRO-V4.2-FINAL.html
+   └─ Líneas:     2213
+   └─ ✅ CANDIDATO A PRODUCCIÓN
+
+📊 SCORE: 30 - ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/ECO-COL-SISTEMA-COMPLETO.html
+   └─ Líneas:     1038
+   └─ ❌ PROBABLEMENTE OBSOLETO
+
+📊 SCORE: 150 - ./ECO-COL VERSION FINAL V5/ECO-COL-ULTIMATE-V6.0-FUSION.html
+   └─ Líneas:     2047
+   └─ ✅ CANDIDATO A PRODUCCIÓN
+
+📊 SCORE: 123 - ./ECO-COL VERSION FINAL V5/ECO-COL-FINAL-V5.0-COMPLETO.html
+   └─ Líneas:     1357
+   └─ ✅ CANDIDATO A PRODUCCIÓN
+
+📊 SCORE: 127 - ./ECO-COL VERSION FINAL V5/ECO-COL-FINAL-V5.1-MEJORADO.html
+   └─ Líneas:     1747
+   └─ ✅ CANDIDATO A PRODUCCIÓN
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+6. ARCHIVOS OBSOLETOS (Candidatos a eliminación)
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Criterios: Pocas líneas (<500), sin Cornerstone, sin IndexedDB,
+           nombres como 'test', 'demo', 'old', versiones antiguas
+
+🗑️  OBSOLETO: ./ECO-COL---V0-1/ECO-COL-FASE3-COMPLETO.html
+   └─ Líneas:     1426
+   └─ Razones:
+      - No usa Cornerstone.js
+      - Nombre indica versión antigua
+
+🗑️  OBSOLETO: ./ECO-COL---V0-1/ECO-COL-CON-BACKEND.html
+   └─ Líneas:      229
+   └─ Razones:
+      - Muy pequeño (<500 líneas)
+      - No usa Cornerstone.js
+      - Nombre indica versión antigua
+
+🗑️  OBSOLETO: ./ECO-COL---V0-1/ECO-COL-BACKEND-COMPLETO.html
+   └─ Líneas:      567
+   └─ Razones:
+      - No usa Cornerstone.js
+      - Nombre indica versión antigua
+
+🗑️  OBSOLETO: ./ECO-COL---V0-1/ECO-COLECO-COL-CON-BACKEND.html
+   └─ Líneas:        0
+   └─ Razones:
+      - Muy pequeño (<500 líneas)
+      - No usa Cornerstone.js
+      - Nombre indica versión antigua
+
+🗑️  OBSOLETO: ./ECO-COL---V0-1/index-completo.html
+   └─ Líneas:      617
+   └─ Razones:
+      - No usa Cornerstone.js
+      - Nombre indica versión antigua
+
+🗑️  OBSOLETO: ./ECO-COL---V0-1/ECO-COL-FINAL-INTEGRADO.html
+   └─ Líneas:     1380
+   └─ Razones:
+      - No usa Cornerstone.js
+      - Nombre indica versión antigua
+
+🗑️  OBSOLETO: ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/eco-col-parser-mejorado.html
+   └─ Líneas:      483
+   └─ Razones:
+      - Muy pequeño (<500 líneas)
+      - No usa Cornerstone.js
+      - Nombre indica versión antigua
+
+🗑️  OBSOLETO: ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/eco-col-final-completo.html
+   └─ Líneas:      503
+   └─ Razones:
+      - Nombre indica versión antigua
+
+🗑️  OBSOLETO: ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/ECO-COL-TELERADIOLOGIA-COMPLETO.html
+   └─ Líneas:      748
+   └─ Razones:
+      - No usa Cornerstone.js
+      - Nombre indica versión antigua
+
+🗑️  OBSOLETO: ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/ECO-COL-FINAL-OPTIMIZADO.html
+   └─ Líneas:      469
+   └─ Razones:
+      - Muy pequeño (<500 líneas)
+      - No usa Cornerstone.js
+      - Nombre indica versión antigua
+
+🗑️  OBSOLETO: ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/ECO-COL-DEMO-USUARIOS.html
+   └─ Líneas:      589
+   └─ Razones:
+      - No usa Cornerstone.js
+      - Nombre indica versión antigua
+
+🗑️  OBSOLETO: ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/files30/ECO-COL-FASE3-COMPLETO.html
+   └─ Líneas:     1426
+   └─ Razones:
+      - No usa Cornerstone.js
+      - Nombre indica versión antigua
+
+🗑️  OBSOLETO: ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/ECO-COL-PRO-V4.1-FIXED.html
+   └─ Líneas:     2213
+   └─ Razones:
+      - Nombre indica versión antigua
+
+🗑️  OBSOLETO: ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/diagrama-eco-col-arquitectura.html
+   └─ Líneas:      443
+   └─ Razones:
+      - Muy pequeño (<500 líneas)
+      - No usa Cornerstone.js
+      - Nombre indica versión antigua
+
+🗑️  OBSOLETO: ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/ECO-COL-BACKEND-COMPLETO.html
+   └─ Líneas:      567
+   └─ Razones:
+      - No usa Cornerstone.js
+      - Nombre indica versión antigua
+
+🗑️  OBSOLETO: ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/ECO-COL-PRO-V4.0-FINAL.html
+   └─ Líneas:     2157
+   └─ Razones:
+      - Nombre indica versión antigua
+
+🗑️  OBSOLETO: ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/ecocol-pro-v4/ECO-COL-PRO-V4.0-FINAL.html
+   └─ Líneas:     2157
+   └─ Razones:
+      - Nombre indica versión antigua
+
+🗑️  OBSOLETO: ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/ECO-COL-SISTEMA-PROFESIONAL-DEFINITIVO.html
+   └─ Líneas:     2157
+   └─ Razones:
+      - Nombre indica versión antigua
+
+🗑️  OBSOLETO: ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/visor-dicom-funcional.html
+   └─ Líneas:      755
+   └─ Razones:
+      - Nombre indica versión antigua
+
+🗑️  OBSOLETO: ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/index-completo.html
+   └─ Líneas:      617
+   └─ Razones:
+      - No usa Cornerstone.js
+      - Nombre indica versión antigua
+
+🗑️  OBSOLETO: ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/ECO-COL-FUNCIONAL-COMPLETO.html
+   └─ Líneas:      654
+   └─ Razones:
+      - No usa Cornerstone.js
+      - Nombre indica versión antigua
+
+🗑️  OBSOLETO: ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/ECO-COL-PRO-V4.2-FINAL.html
+   └─ Líneas:     2213
+   └─ Razones:
+      - Nombre indica versión antigua
+
+🗑️  OBSOLETO: ./DOCUMENTOS ADICIONALES ECO COL V2-3-4/ECO-COL-SISTEMA-COMPLETO.html
+   └─ Líneas:     1038
+   └─ Razones:
+      - No usa Cornerstone.js
+      - Nombre indica versión antigua
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+7. MAPA DE DEPENDENCIAS EXTERNAS
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+Librerías DICOM encontradas:
+
+✅ Cornerstone Core (Motor de renderizado DICOM)
+✅ Cornerstone Tools (Herramientas de medición)
+✅ DICOM Parser (Parser de archivos DICOM)
+✅ WADO Image Loader (Carga de imágenes)
+✅ Hammer.js (Gestos táctiles)
+
+Almacenamiento de datos:
+
+✅ IndexedDB (Base de datos del navegador)
+✅ localStorage (Almacenamiento simple)
+
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+8. RECOMENDACIONES DEL AUDITOR
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+✅ ARCHIVOS QUE DEBES MANTENER:
+
+   1. El archivo HTML con mayor score (probablemente *ULTIMATE*V6*.html)
+      → Este es tu visor DICOM en producción
+
+   2. Scripts de instalación (install-*.sh)
+      → Para deployment y configuración
+
+   3. Documentación de análisis (📊 Análisis*.txt)
+      → Historial y especificaciones
+
+🗑️  ARCHIVOS QUE PUEDES ELIMINAR:
+
+   1. Versiones antiguas (v0-1, v2-3, etc.)
+   2. Archivos 'demo', 'test', 'backup'
+   3. HTMLs con <500 líneas sin Cornerstone
+   4. Copias duplicadas
+
+📁 ESTRUCTURA RECOMENDADA:
+
+   ECO-COL/
+   ├── ECO-COL-ULTIMATE-V6-FUSION.html  ← PRODUCCIÓN
+   ├── install-fase-*.sh                ← Instaladores
+   ├── docs/
+   │   ├── Análisis*.txt
+   │   └── README.md
+   ├── archive/                         ← Versiones antiguas
+   │   ├── v1/
+   │   ├── v2/
+   │   └── ...
+   └── scripts/
+       └── auditor.sh                   ← Este script
+
+🔥 PRÓXIMOS PASOS:
+
+   1. Revisar este reporte completo
+   2. Hacer backup de TODA la carpeta
+   3. Mover archivos obsoletos a carpeta 'archive/'
+   4. Mantener solo el archivo HTML de producción
+   5. Documentar la versión final
+

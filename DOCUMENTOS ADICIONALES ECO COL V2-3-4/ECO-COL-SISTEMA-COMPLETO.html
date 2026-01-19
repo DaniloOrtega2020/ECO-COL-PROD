@@ -1,0 +1,1038 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>ECO-COL - Sistema Completo de Tele-Radiología</title>
+    <script src="https://unpkg.com/dicom-parser@1.8.11/dist/dicomParser.min.js"></script>
+    <style>
+        :root{--primary:#00695c;--accent:#00bfa5;--bg:#121212;--panel:#1e1e1e;--border:#333;--warning:#ff9800;--danger:#f44336;--h1:#1976d2;--h2:#00695c}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:#fff;height:100vh;overflow:hidden}
+        
+        /* LOGIN SELECTOR */
+        .role-selector{position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#1a1a2e,#16213e);display:flex;align-items:center;justify-content:center;z-index:10001}
+        .role-box{background:rgba(255,255,255,0.98);color:#333;padding:3rem;border-radius:20px;box-shadow:0 25px 70px rgba(0,0,0,0.5);max-width:1000px;width:95%}
+        .role-title{text-align:center;font-size:2.5rem;color:#00695c;margin-bottom:0.5rem}
+        .role-subtitle{text-align:center;color:#666;margin-bottom:3rem;font-size:1.1rem}
+        .roles-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:2rem}
+        .role-card{background:linear-gradient(135deg,#f8f9fa,#fff);padding:2.5rem;border-radius:16px;cursor:pointer;border:4px solid transparent;transition:all 0.3s;text-align:center;position:relative;overflow:hidden}
+        .role-card::before{content:'';position:absolute;top:0;left:0;right:0;height:6px;transition:all 0.3s}
+        .role-card.hospital1::before{background:linear-gradient(90deg,#1976d2,#42a5f5)}
+        .role-card.hospital2::before{background:linear-gradient(90deg,#00695c,#00bfa5)}
+        .role-card.admin::before{background:linear-gradient(90deg,#f44336,#ff5722)}
+        .role-card:hover{transform:translateY(-8px);box-shadow:0 12px 35px rgba(0,0,0,0.2)}
+        .role-card.hospital1:hover{border-color:#1976d2}
+        .role-card.hospital2:hover{border-color:#00695c}
+        .role-card.admin:hover{border-color:#f44336}
+        .role-icon{font-size:5rem;margin-bottom:1.5rem}
+        .role-name{font-size:1.6rem;font-weight:700;margin-bottom:0.8rem}
+        .role-card.hospital1 .role-name{color:#1976d2}
+        .role-card.hospital2 .role-name{color:#00695c}
+        .role-card.admin .role-name{color:#f44336}
+        .role-description{color:#666;font-size:0.95rem;line-height:1.6;margin-bottom:1.5rem}
+        .role-features{text-align:left;font-size:0.85rem;color:#777;line-height:1.8}
+        .role-features li{list-style:none;padding-left:1.5rem;position:relative}
+        .role-features li::before{content:'✓';position:absolute;left:0;color:#4caf50;font-weight:700}
+        
+        /* USER LOGIN (HOSPITAL 2) */
+        .user-login{position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#004d40,#00695c);display:none;align-items:center;justify-content:center;z-index:10000}
+        .user-login-box{background:rgba(255,255,255,0.98);color:#333;padding:2.5rem;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,0.4);max-width:900px;width:95%}
+        .users-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:2rem}
+        .user-card{background:#f8f9fa;padding:1.5rem;border-radius:12px;cursor:pointer;border:3px solid transparent;transition:all 0.3s;text-align:center}
+        .user-card:hover,.user-card.selected{background:#c8e6c9;border-color:#00695c;transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,191,165,0.3)}
+        .user-avatar{font-size:4rem;margin-bottom:1rem}
+        .user-name{color:#00695c;font-size:1.2rem;font-weight:700;margin-bottom:0.5rem}
+        .user-info{color:#666;font-size:0.85rem;margin:0.3rem 0}
+        .login-btn{width:100%;padding:1.2rem;background:#00695c;color:#fff;border:none;border-radius:8px;font-size:1.1rem;font-weight:700;cursor:pointer;margin-top:2rem;transition:all 0.3s;text-transform:uppercase}
+        .login-btn:hover:not(:disabled){background:#00bfa5;transform:translateY(-2px)}
+        .login-btn:disabled{background:#ccc;cursor:not-allowed}
+        .back-btn{position:absolute;top:2rem;left:2rem;background:rgba(255,255,255,0.2);color:#fff;border:none;padding:0.8rem 1.5rem;border-radius:8px;cursor:pointer;font-weight:600;transition:all 0.3s}
+        .back-btn:hover{background:rgba(255,255,255,0.3)}
+        
+        /* APP HEADER */
+        .app{display:none}
+        .header{background:linear-gradient(135deg,#004d40,var(--primary));padding:1rem 2rem;display:flex;justify-content:space-between;align-items:center;border-bottom:3px solid var(--accent);box-shadow:0 4px 12px rgba(0,0,0,0.3)}
+        .header.hospital1{background:linear-gradient(135deg,#1565c0,#1976d2)}
+        .header.admin{background:linear-gradient(135deg,#c62828,#d32f2f)}
+        .header h1{font-size:1.5rem;display:flex;align-items:center;gap:0.5rem}
+        .badge{background:var(--accent);color:#000;padding:0.3rem 0.8rem;border-radius:20px;font-size:0.75rem;font-weight:700}
+        .badge.h1{background:#42a5f5}
+        .badge.h2{background:#00bfa5}
+        .badge.admin{background:#ff5722}
+        .badge.pending{animation:pulse 2s infinite}
+        .user-info{display:flex;align-items:center;gap:1rem;background:rgba(0,0,0,0.3);padding:0.6rem 1.2rem;border-radius:25px}
+        .logout-btn{background:#f44336;color:#fff;border:none;padding:0.6rem 1.2rem;border-radius:6px;cursor:pointer;font-weight:600;transition:all 0.3s}
+        .logout-btn:hover{background:#d32f2f}
+        
+        /* MAIN LAYOUTS */
+        .main{height:calc(100vh - 73px);overflow:hidden}
+        .main.h1-layout,.main.h2-layout{display:grid;grid-template-columns:380px 1fr 400px}
+        .main.admin-layout{display:grid;grid-template-columns:300px 1fr}
+        .panel{background:var(--panel);overflow-y:auto}
+        .panel-header{padding:1.2rem;background:#252525;border-bottom:2px solid var(--primary);position:sticky;top:0;z-index:10}
+        .panel-title{font-size:1rem;color:var(--accent);margin-bottom:0.8rem;text-transform:uppercase;letter-spacing:0.5px;display:flex;align-items:center;gap:0.5rem}
+        
+        /* PATIENT FORM (H1) */
+        .form-group{margin-bottom:1.5rem}
+        .form-group label{display:block;color:var(--accent);font-size:0.9rem;font-weight:600;margin-bottom:0.5rem}
+        .form-group input,.form-group select{width:100%;padding:0.8rem;background:#252525;border:1px solid var(--border);color:#fff;border-radius:6px;font-size:0.9rem}
+        .form-group input:focus,.form-group select:focus{outline:none;border-color:var(--accent)}
+        .action-btn{width:100%;padding:1rem;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:0.95rem;transition:all 0.3s;text-transform:uppercase;margin-top:0.5rem}
+        .btn-primary{background:#1976d2;color:#fff}
+        .btn-primary:hover{background:#1565c0;transform:translateY(-2px)}
+        .btn-success{background:#4caf50;color:#fff}
+        .btn-success:hover{background:#45a049}
+        .btn-upload{background:var(--primary);color:#fff}
+        .btn-upload:hover{background:var(--accent)}
+        
+        /* STUDY LIST */
+        .study-list{padding:0.5rem}
+        .study-item{background:#252525;border:1px solid var(--border);border-radius:8px;padding:1rem;margin:0.5rem;cursor:pointer;transition:all 0.3s;position:relative}
+        .study-item:hover,.study-item.active{background:linear-gradient(135deg,#1a4a44,#256d63);border-color:var(--accent);transform:translateX(5px)}
+        .study-item.pending::before{content:'⏳';position:absolute;top:10px;right:10px;font-size:1.2rem}
+        .study-item.completed::before{content:'✅';position:absolute;top:10px;right:10px;font-size:1.2rem}
+        .study-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem}
+        .study-id{color:var(--accent);font-weight:700;font-size:0.95rem}
+        .study-status{padding:0.2rem 0.6rem;border-radius:12px;font-size:0.7rem;font-weight:700;text-transform:uppercase}
+        .study-status.pending{background:var(--warning);color:#000}
+        .study-status.reading{background:#2196f3;color:#fff}
+        .study-status.completed{background:#4caf50;color:#fff}
+        .study-details{font-size:0.85rem;color:#b0b0b0;line-height:1.6}
+        .study-details strong{color:#fff}
+        
+        /* VIEWER */
+        .viewer-panel{background:#000;display:flex;flex-direction:column}
+        .toolbar{background:#1a1a1a;padding:0.8rem;display:flex;gap:0.5rem;border-bottom:1px solid var(--border);flex-wrap:wrap}
+        .btn{background:#2a2a2a;border:1px solid var(--border);color:#fff;padding:0.6rem 1rem;border-radius:6px;cursor:pointer;font-size:0.85rem;transition:all 0.3s}
+        .btn:hover,.btn.active{background:var(--primary)}
+        .viewer-area{flex:1;display:flex;align-items:center;justify-content:center;position:relative}
+        #canvas{max-width:100%;max-height:100%;border:2px solid var(--accent);box-shadow:0 8px 32px rgba(0,191,165,0.3)}
+        .overlay{position:absolute;top:15px;left:15px;background:rgba(0,0,0,0.9);padding:1rem;border-radius:8px;border:1px solid var(--accent);font-family:monospace;font-size:0.8rem;line-height:1.8;pointer-events:none}
+        .overlay-label{color:var(--accent);font-weight:700;margin-right:0.5rem}
+        .empty-viewer{text-align:center;color:#666;padding:4rem 2rem}
+        .empty-icon{font-size:5rem;margin-bottom:1rem;opacity:0.5}
+        
+        /* OBSERVATIONS */
+        textarea{width:100%;min-height:200px;background:#252525;border:1px solid var(--border);color:#fff;padding:1rem;border-radius:8px;font-family:inherit;font-size:0.9rem;resize:vertical}
+        textarea:focus{outline:none;border-color:var(--accent)}
+        .patient-info{background:#252525;padding:1rem;border-radius:8px;margin-bottom:1rem;border-left:4px solid var(--accent)}
+        .patient-info div{margin:0.4rem 0;font-size:0.85rem}
+        .patient-info strong{color:var(--accent)}
+        
+        /* ADMIN DASHBOARD */
+        .stats-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:1.5rem;padding:1.5rem}
+        .stat-card{background:#252525;padding:2rem;border-radius:12px;border-left:4px solid var(--accent);text-align:center}
+        .stat-value{font-size:3rem;color:var(--accent);font-weight:700;margin-bottom:0.5rem}
+        .stat-label{color:#b0b0b0;text-transform:uppercase;font-size:0.85rem;letter-spacing:0.5px}
+        .admin-table{width:100%;border-collapse:collapse;margin-top:1rem}
+        .admin-table th{background:#252525;padding:1rem;text-align:left;color:var(--accent);font-size:0.85rem;text-transform:uppercase}
+        .admin-table td{padding:0.8rem 1rem;border-bottom:1px solid var(--border);font-size:0.9rem}
+        .admin-table tr:hover{background:#252525}
+        
+        /* UTILS */
+        .pulse{animation:pulse 2s infinite}
+        @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.7;transform:scale(1.05)}}
+        .notification{position:fixed;top:90px;right:20px;padding:1rem 1.5rem;border-radius:8px;font-weight:600;z-index:9999;animation:slideIn 0.3s;box-shadow:0 8px 24px rgba(0,0,0,0.4);max-width:400px}
+        .notification.success{background:#4caf50;border:2px solid #66bb6a}
+        .notification.warning{background:#ff9800;border:2px solid #ffb74d;color:#000}
+        .notification.error{background:#f44336;border:2px solid #ef5350}
+        .notification.info{background:#2196f3;border:2px solid #42a5f5}
+        @keyframes slideIn{from{transform:translateX(450px);opacity:0}to{transform:translateX(0);opacity:1}}
+        input[type="file"]{display:none}
+        .filter-tabs{display:flex;gap:0.5rem;margin-top:0.8rem}
+        .filter-tab{flex:1;padding:0.6rem;background:#2a2a2a;border:none;color:#fff;border-radius:6px;cursor:pointer;font-size:0.8rem;transition:all 0.3s}
+        .filter-tab.active{background:var(--primary)}
+        .obs-section{margin-bottom:1.5rem}
+        .obs-section h3{font-size:0.9rem;color:var(--accent);margin-bottom:1rem;padding-bottom:0.5rem;border-bottom:2px solid var(--primary);text-transform:uppercase}
+        .control-group{margin-bottom:1rem}
+        .control-label{display:flex;justify-content:space-between;margin-bottom:0.5rem;font-size:0.85rem}
+        .control-value{color:var(--accent);font-weight:700}
+        input[type="range"]{width:100%;height:6px;background:var(--border);-webkit-appearance:none;border-radius:3px}
+        input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);cursor:pointer}
+    </style>
+</head>
+<body>
+    <!-- ROLE SELECTOR -->
+    <div class="role-selector" id="role-selector">
+        <div class="role-box">
+            <h1 class="role-title">🏥 ECO-COL - Sistema de Tele-Radiología</h1>
+            <p class="role-subtitle">Selecciona tu rol para acceder al sistema</p>
+            
+            <div class="roles-grid">
+                <div class="role-card hospital1" onclick="selectRole('hospital1')">
+                    <div class="role-icon">🏥</div>
+                    <div class="role-name">Hospital #1</div>
+                    <div class="role-description">Hospital Periférico - Creación de Pacientes y Captura de Ecografías</div>
+                    <ul class="role-features">
+                        <li>Registrar pacientes</li>
+                        <li>Tomar ecografías</li>
+                        <li>Subir estudios DICOM</li>
+                        <li>Recibir diagnósticos</li>
+                        <li>Iniciar tratamientos</li>
+                    </ul>
+                </div>
+                
+                <div class="role-card hospital2" onclick="selectRole('hospital2')">
+                    <div class="role-icon">👨‍⚕️</div>
+                    <div class="role-name">Hospital #2</div>
+                    <div class="role-description">Hospital Especializado - Lectura y Diagnóstico Radiológico</div>
+                    <ul class="role-features">
+                        <li>Ver lista de trabajo</li>
+                        <li>Leer ecografías</li>
+                        <li>Escribir observaciones</li>
+                        <li>Completar estudios</li>
+                        <li>Notificar diagnósticos</li>
+                    </ul>
+                </div>
+                
+                <div class="role-card admin" onclick="selectRole('admin')">
+                    <div class="role-icon">⚙️</div>
+                    <div class="role-name">Administrador</div>
+                    <div class="role-description">Panel de Administración - Vista General del Sistema</div>
+                    <ul class="role-features">
+                        <li>Dashboard completo</li>
+                        <li>Todos los estudios</li>
+                        <li>Estadísticas en tiempo real</li>
+                        <li>Gestión de usuarios</li>
+                        <li>Monitoreo del sistema</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- USER LOGIN (HOSPITAL 2) -->
+    <div class="user-login" id="user-login">
+        <button class="back-btn" onclick="backToRoleSelector()">← Volver</button>
+        <div class="user-login-box">
+            <h1 style="text-align:center;color:#00695c;font-size:2rem;margin-bottom:0.5rem">Hospital #2 - Radiólogos</h1>
+            <p style="text-align:center;color:#666;margin-bottom:1.5rem">Selecciona tu perfil para acceder</p>
+            
+            <div class="users-grid">
+                <div class="user-card" onclick="selectUser('ortega')">
+                    <div class="user-avatar">👨‍⚕️</div>
+                    <div class="user-name">Dr. Danilo Ortega</div>
+                    <div class="user-info"><strong>Especialidad:</strong> Radiología Abdominal</div>
+                    <div class="user-info"><strong>Pendientes:</strong> <span id="pending-ortega">0</span></div>
+                </div>
+                <div class="user-card" onclick="selectUser('martinez')">
+                    <div class="user-avatar">👩‍⚕️</div>
+                    <div class="user-name">Dra. María Martínez</div>
+                    <div class="user-info"><strong>Especialidad:</strong> Eco. Obstétrica</div>
+                    <div class="user-info"><strong>Pendientes:</strong> <span id="pending-martinez">0</span></div>
+                </div>
+                <div class="user-card" onclick="selectUser('rodriguez')">
+                    <div class="user-avatar">👨‍⚕️</div>
+                    <div class="user-name">Dr. Carlos Rodríguez</div>
+                    <div class="user-info"><strong>Especialidad:</strong> Eco. Cardíaca</div>
+                    <div class="user-info"><strong>Pendientes:</strong> <span id="pending-rodriguez">0</span></div>
+                </div>
+            </div>
+            
+            <button class="login-btn" id="user-login-btn" disabled onclick="loginUser()">INGRESAR</button>
+        </div>
+    </div>
+
+    <!-- APP CONTAINER -->
+    <div class="app" id="app"></div>
+    
+    <input type="file" id="file-input" accept=".dcm,.dicom" multiple>
+    
+    <script src="app.js"></script>
+    <script>
+// ==================== DATABASE ====================
+const DB = {
+    studies: [],
+    patients: [],
+    currentRole: null,
+    currentUser: null,
+    currentStudy: null,
+    
+    init() {
+        const studies = localStorage.getItem('ecocol_studies');
+        const patients = localStorage.getItem('ecocol_patients');
+        
+        if (studies) this.studies = JSON.parse(studies);
+        if (patients) this.patients = JSON.parse(patients);
+        
+        // Create demo data if empty
+        if (this.studies.length === 0) this.createDemoData();
+        
+        this.save();
+    },
+    
+    createDemoData() {
+        this.patients = [
+            {id: 'PAC-001', name: 'García Pérez, Ana María', dni: '12345678', age: 45, gender: 'F', phone: '555-0001'},
+            {id: 'PAC-002', name: 'Rodríguez López, Carlos', dni: '23456789', age: 52, gender: 'M', phone: '555-0002'},
+            {id: 'PAC-003', name: 'Martínez Silva, Laura', dni: '34567890', age: 38, gender: 'F', phone: '555-0003'}
+        ];
+        
+        this.studies = [
+            {id: 'ECO-001', patientId: 'PAC-001', hospital: 'Hospital Regional Norte', date: '2026-01-17', status: 'pending', modality: 'US', observations: '', radiologist: null, createdAt: new Date().toISOString()},
+            {id: 'ECO-002', patientId: 'PAC-002', hospital: 'Hospital Regional Norte', date: '2026-01-17', status: 'pending', modality: 'US', observations: '', radiologist: null, createdAt: new Date().toISOString()},
+            {id: 'ECO-003', patientId: 'PAC-003', hospital: 'Hospital Regional Norte', date: '2026-01-16', status: 'completed', modality: 'US', observations: 'Hígado normal. Vesícula sin alteraciones.', radiologist: 'Dr. Danilo Ortega', completedAt: new Date(Date.now() - 86400000).toISOString()}
+        ];
+    },
+    
+    save() {
+        localStorage.setItem('ecocol_studies', JSON.stringify(this.studies));
+        localStorage.setItem('ecocol_patients', JSON.stringify(this.patients));
+    },
+    
+    addPatient(patient) {
+        patient.id = 'PAC-' + String(this.patients.length + 1).padStart(3, '0');
+        this.patients.push(patient);
+        this.save();
+        return patient;
+    },
+    
+    addStudy(study) {
+        study.id = 'ECO-' + String(this.studies.length + 1).padStart(3, '0');
+        study.createdAt = new Date().toISOString();
+        study.status = 'pending';
+        this.studies.push(study);
+        this.save();
+        return study;
+    },
+    
+    getPatient(id) {
+        return this.patients.find(p => p.id === id);
+    },
+    
+    getStudy(id) {
+        return this.studies.find(s => s.id === id);
+    },
+    
+    updateStudy(id, data) {
+        const study = this.getStudy(id);
+        if (study) {
+            Object.assign(study, data);
+            this.save();
+        }
+    },
+    
+    getPendingCount() {
+        return this.studies.filter(s => s.status === 'pending').length;
+    },
+    
+    getCompletedCount() {
+        return this.studies.filter(s => s.status === 'completed').length;
+    }
+};
+
+// ==================== RADIOLOGISTS ====================
+const RADIOLOGISTS = {
+    'ortega': {id: 'ortega', name: 'Dr. Danilo Ortega', specialty: 'Radiología Abdominal'},
+    'martinez': {id: 'martinez', name: 'Dra. María Martínez', specialty: 'Ecografía Obstétrica'},
+    'rodriguez': {id: 'rodriguez', name: 'Dr. Carlos Rodríguez', specialty: 'Ecografía Cardíaca'}
+};
+
+// ==================== DICOM VIEWER ====================
+let canvas, ctx, allFrames = [], currentFrame = 0, totalFrames = 1;
+let playing = false, playInterval = null, inverted = false;
+
+// ==================== INIT ====================
+window.addEventListener('DOMContentLoaded', () => {
+    DB.init();
+    updatePendingCounts();
+    console.log('✅ ECO-COL Sistema Completo Iniciado');
+});
+
+// ==================== ROLE SELECTION ====================
+function selectRole(role) {
+    DB.currentRole = role;
+    
+    if (role === 'hospital1') {
+        loadHospital1();
+    } else if (role === 'hospital2') {
+        showUserLogin();
+    } else if (role === 'admin') {
+        loadAdmin();
+    }
+}
+
+function backToRoleSelector() {
+    document.getElementById('user-login').style.display = 'none';
+    document.getElementById('role-selector').style.display = 'flex';
+}
+
+// ==================== USER LOGIN (H2) ====================
+let selectedUserId = null;
+
+function showUserLogin() {
+    document.getElementById('role-selector').style.display = 'none';
+    document.getElementById('user-login').style.display = 'flex';
+    updatePendingCounts();
+}
+
+function selectUser(userId) {
+    selectedUserId = userId;
+    document.querySelectorAll('.user-card').forEach(c => c.classList.remove('selected'));
+    event.target.closest('.user-card').classList.add('selected');
+    document.getElementById('user-login-btn').disabled = false;
+}
+
+function loginUser() {
+    if (!selectedUserId) return;
+    DB.currentUser = RADIOLOGISTS[selectedUserId];
+    document.getElementById('user-login').style.display = 'none';
+    loadHospital2();
+}
+
+function updatePendingCounts() {
+    const count = DB.getPendingCount();
+    document.querySelectorAll('[id^="pending-"]').forEach(el => el.textContent = count);
+}
+
+// ==================== LOAD INTERFACES ====================
+function loadHospital1() {
+    document.getElementById('role-selector').style.display = 'none';
+    const app = document.getElementById('app');
+    app.innerHTML = getHospital1HTML();
+    app.style.display = 'block';
+    initHospital1();
+}
+
+function loadHospital2() {
+    const app = document.getElementById('app');
+    app.innerHTML = getHospital2HTML();
+    app.style.display = 'block';
+    initHospital2();
+}
+
+function loadAdmin() {
+    document.getElementById('role-selector').style.display = 'none';
+    const app = document.getElementById('app');
+    app.innerHTML = getAdminHTML();
+    app.style.display = 'block';
+    initAdmin();
+}
+
+// ==================== HOSPITAL 1 HTML ====================
+function getHospital1HTML() {
+    return `
+<div class="header hospital1">
+    <h1>🏥 ECO-COL <span class="badge h1">HOSPITAL #1</span></h1>
+    <div style="display:flex;gap:1.5rem;align-items:center">
+        <span class="badge">Hospital Periférico</span>
+        <button class="logout-btn" onclick="logout()">🚪 Salir</button>
+    </div>
+</div>
+<div class="main h1-layout">
+    <div class="panel">
+        <div class="panel-header">
+            <h2 class="panel-title">➕ NUEVO PACIENTE</h2>
+        </div>
+        <div style="padding:1.5rem">
+            <form id="patient-form">
+                <div class="form-group">
+                    <label>Nombre Completo *</label>
+                    <input type="text" id="pat-name" required>
+                </div>
+                <div class="form-group">
+                    <label>DNI / Cédula *</label>
+                    <input type="text" id="pat-dni" required>
+                </div>
+                <div class="form-group">
+                    <label>Edad</label>
+                    <input type="number" id="pat-age">
+                </div>
+                <div class="form-group">
+                    <label>Género</label>
+                    <select id="pat-gender">
+                        <option value="M">Masculino</option>
+                        <option value="F">Femenino</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Teléfono</label>
+                    <input type="tel" id="pat-phone">
+                </div>
+                <button type="submit" class="action-btn btn-primary">💾 REGISTRAR PACIENTE</button>
+            </form>
+        </div>
+    </div>
+    
+    <div class="panel viewer-panel">
+        <div class="toolbar">
+            <button class="btn" onclick="uploadDICOM()">📤 Cargar Ecografía DICOM</button>
+            <button class="btn" onclick="resetView()">↻ Reset</button>
+            <button class="btn" onclick="autoAdjust()">✨ Auto</button>
+        </div>
+        <div class="viewer-area">
+            <div class="empty-viewer" id="h1-empty">
+                <div class="empty-icon">🖼️</div>
+                <div style="font-size:1.2rem;margin-bottom:1rem">Cargue la ecografía del paciente</div>
+                <div style="font-size:0.9rem;opacity:0.7">Click en "Cargar Ecografía DICOM"</div>
+            </div>
+            <canvas id="canvas" width="512" height="512" style="display:none"></canvas>
+            <div class="overlay" id="overlay" style="display:none">
+                <div><span class="overlay-label">PACIENTE:</span><span id="ov-name">--</span></div>
+                <div><span class="overlay-label">ID:</span><span id="ov-id">--</span></div>
+                <div><span class="overlay-label">FECHA:</span><span id="ov-date">--</span></div>
+                <div><span class="overlay-label">DIMENSIONES:</span><span id="ov-dims">--</span></div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="panel">
+        <div class="panel-header">
+            <h2 class="panel-title">📋 MIS ESTUDIOS</h2>
+            <div class="filter-tabs">
+                <button class="filter-tab active" onclick="filterH1Studies('all')">Todos</button>
+                <button class="filter-tab" onclick="filterH1Studies('pending')">Pendientes</button>
+                <button class="filter-tab" onclick="filterH1Studies('completed')">Completados</button>
+            </div>
+        </div>
+        <div class="study-list" id="h1-studies"></div>
+        
+        <div style="padding:1.5rem" id="h1-upload-panel" style="display:none">
+            <div class="patient-info" id="h1-patient-info"></div>
+            <button class="action-btn btn-upload" onclick="uploadAndSend()">📤 SUBIR ECOGRAFÍA Y ENVIAR AL HOSPITAL #2</button>
+        </div>
+    </div>
+</div>
+    `;
+}
+
+// ==================== HOSPITAL 2 HTML ====================
+function getHospital2HTML() {
+    return `
+<div class="header">
+    <h1>🏥 ECO-COL <span class="badge h2">HOSPITAL #2</span></h1>
+    <div style="display:flex;gap:1.5rem;align-items:center">
+        <div class="user-info">
+            <span>${DB.currentUser.name}</span>
+        </div>
+        <span class="badge pending" id="h2-pending">0 PENDIENTES</span>
+        <button class="logout-btn" onclick="logout()">🚪 Salir</button>
+    </div>
+</div>
+<div class="main h2-layout">
+    <div class="panel">
+        <div class="panel-header">
+            <h2 class="panel-title">📋 LISTA DE TRABAJO</h2>
+            <div class="filter-tabs">
+                <button class="filter-tab active" onclick="filterH2Studies('all')">Todos</button>
+                <button class="filter-tab" onclick="filterH2Studies('pending')">Pendientes</button>
+                <button class="filter-tab" onclick="filterH2Studies('completed')">Completados</button>
+            </div>
+        </div>
+        <div class="study-list" id="h2-studies"></div>
+    </div>
+    
+    <div class="panel viewer-panel">
+        <div class="toolbar">
+            <button class="btn active">🔍 Pan</button>
+            <button class="btn" onclick="invertColors()">🔄 Invertir</button>
+            <button class="btn" onclick="resetView()">↻ Reset</button>
+            <button class="btn" onclick="autoAdjust()">✨ Auto</button>
+        </div>
+        <div class="viewer-area">
+            <div class="empty-viewer">
+                <div class="empty-icon">🖼️</div>
+                <div>Selecciona un estudio</div>
+            </div>
+            <canvas id="canvas" width="512" height="512" style="display:none"></canvas>
+            <div class="overlay" id="overlay" style="display:none"></div>
+        </div>
+    </div>
+    
+    <div class="panel" style="padding:1.5rem">
+        <div id="h2-no-study">
+            <div class="empty-viewer" style="padding:2rem">
+                <div style="font-size:3rem;margin-bottom:1rem">📝</div>
+                <div>Selecciona un estudio para agregar observaciones</div>
+            </div>
+        </div>
+        
+        <div id="h2-obs-panel" style="display:none">
+            <div class="obs-section">
+                <h3>👤 Datos del Paciente</h3>
+                <div class="patient-info" id="h2-patient-info"></div>
+            </div>
+            
+            <div class="obs-section">
+                <h3>🎚️ Controles</h3>
+                <div class="control-group">
+                    <div class="control-label">
+                        <span>Centro</span>
+                        <span class="control-value" id="center-val">128</span>
+                    </div>
+                    <input type="range" id="center-slider" min="0" max="255" value="128" oninput="updateWindow()">
+                </div>
+                <div class="control-group">
+                    <div class="control-label">
+                        <span>Ancho</span>
+                        <span class="control-value" id="width-val">255</span>
+                    </div>
+                    <input type="range" id="width-slider" min="1" max="255" value="255" oninput="updateWindow()">
+                </div>
+            </div>
+            
+            <div class="obs-section">
+                <h3>📋 Hallazgos</h3>
+                <textarea id="h2-observations" placeholder="Escriba sus observaciones..."></textarea>
+            </div>
+            
+            <button class="action-btn btn-primary" onclick="saveObservations()">💾 GUARDAR</button>
+            <button class="action-btn btn-success" onclick="completeStudy()">✅ COMPLETAR Y ENVIAR AL HOSPITAL #1</button>
+        </div>
+    </div>
+</div>
+    `;
+}
+
+// ==================== ADMIN HTML ====================
+function getAdminHTML() {
+    return `
+<div class="header admin">
+    <h1>🏥 ECO-COL <span class="badge admin">ADMINISTRADOR</span></h1>
+    <button class="logout-btn" onclick="logout()">🚪 Salir</button>
+</div>
+<div class="main admin-layout">
+    <div class="panel">
+        <div class="panel-header">
+            <h2 class="panel-title">📊 ESTADÍSTICAS</h2>
+        </div>
+        <div class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-value">${DB.studies.length}</div>
+                <div class="stat-label">Total Estudios</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${DB.getPendingCount()}</div>
+                <div class="stat-label">Pendientes</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${DB.getCompletedCount()}</div>
+                <div class="stat-label">Completados</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-value">${DB.patients.length}</div>
+                <div class="stat-label">Pacientes</div>
+            </div>
+        </div>
+        <div class="panel-header" style="position:static;margin-top:2rem">
+            <h2 class="panel-title">👥 PACIENTES</h2>
+        </div>
+        <div style="padding:1rem">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>Nombre</th>
+                        <th>DNI</th>
+                        <th>Edad</th>
+                        <th>Teléfono</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${DB.patients.map(p => `
+                        <tr>
+                            <td>${p.id}</td>
+                            <td>${p.name}</td>
+                            <td>${p.dni}</td>
+                            <td>${p.age || '--'}</td>
+                            <td>${p.phone || '--'}</td>
+                        </tr>
+                    `).join('')}
+                </tbody>
+            </table>
+        </div>
+    </div>
+    
+    <div class="panel" style="overflow:auto">
+        <div class="panel-header">
+            <h2 class="panel-title">📋 TODOS LOS ESTUDIOS</h2>
+        </div>
+        <div style="padding:1rem">
+            <table class="admin-table">
+                <thead>
+                    <tr>
+                        <th>ID Estudio</th>
+                        <th>Paciente</th>
+                        <th>Fecha</th>
+                        <th>Estado</th>
+                        <th>Radiólogo</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    ${DB.studies.map(s => {
+                        const patient = DB.getPatient(s.patientId);
+                        return `
+                            <tr>
+                                <td><strong>${s.id}</strong></td>
+                                <td>${patient?.name || 'N/A'}</td>
+                                <td>${s.date}</td>
+                                <td><span class="study-status ${s.status}">${s.status === 'pending' ? 'PENDIENTE' : 'COMPLETADO'}</span></td>
+                                <td>${s.radiologist || '--'}</td>
+                            </tr>
+                        `;
+                    }).join('')}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+    `;
+}
+
+// ==================== INIT FUNCTIONS ====================
+function initHospital1() {
+    canvas = document.getElementById('canvas');
+    ctx = canvas.getContext('2d');
+    
+    document.getElementById('patient-form').onsubmit = e => {
+        e.preventDefault();
+        const patient = {
+            name: document.getElementById('pat-name').value,
+            dni: document.getElementById('pat-dni').value,
+            age: document.getElementById('pat-age').value,
+            gender: document.getElementById('pat-gender').value,
+            phone: document.getElementById('pat-phone').value
+        };
+        DB.addPatient(patient);
+        notify('Paciente registrado correctamente', 'success');
+        e.target.reset();
+        loadH1Studies();
+    };
+    
+    document.getElementById('file-input').onchange = e => {
+        const files = Array.from(e.target.files);
+        if (files.length > 0 && files[0].name.match(/\.(dcm|dicom)$/i)) {
+            loadDICOM(files[0]);
+        }
+        e.target.value = '';
+    };
+    
+    loadH1Studies();
+}
+
+function initHospital2() {
+    canvas = document.getElementById('canvas');
+    ctx = canvas.getContext('2d');
+    loadH2Studies();
+    document.getElementById('h2-pending').textContent = `${DB.getPendingCount()} PENDIENTES`;
+}
+
+function initAdmin() {
+    // Admin is static HTML, no init needed
+}
+
+// ==================== HOSPITAL 1 FUNCTIONS ====================
+function loadH1Studies() {
+    const container = document.getElementById('h1-studies');
+    container.innerHTML = '';
+    
+    DB.studies.forEach(study => {
+        const patient = DB.getPatient(study.patientId);
+        if (!patient) return;
+        
+        const item = document.createElement('div');
+        item.className = `study-item ${study.status}`;
+        item.onclick = () => viewH1Study(study.id);
+        
+        item.innerHTML = `
+            <div class="study-header">
+                <span class="study-id">${study.id}</span>
+                <span class="study-status ${study.status}">${study.status === 'pending' ? 'PENDIENTE' : 'COMPLETADO'}</span>
+            </div>
+            <div class="study-details">
+                <div><strong>Paciente:</strong> ${patient.name}</div>
+                <div><strong>Fecha:</strong> ${study.date}</div>
+                ${study.status === 'completed' ? `<div><strong>Radiólogo:</strong> ${study.radiologist}</div>` : ''}
+            </div>
+        `;
+        
+        container.appendChild(item);
+    });
+}
+
+function viewH1Study(studyId) {
+    const study = DB.getStudy(studyId);
+    const patient = DB.getPatient(study.patientId);
+    
+    document.querySelectorAll('.study-item').forEach(i => i.classList.remove('active'));
+    event.target.closest('.study-item').classList.add('active');
+    
+    const infoDiv = document.getElementById('h1-patient-info');
+    infoDiv.innerHTML = `
+        <div><strong>Estudio:</strong> ${study.id}</div>
+        <div><strong>Paciente:</strong> ${patient.name}</div>
+        <div><strong>Estado:</strong> ${study.status === 'pending' ? '⏳ En espera de lectura' : '✅ Completado'}</div>
+        ${study.observations ? `<div style="margin-top:1rem;padding:1rem;background:#1e1e1e;border-radius:6px"><strong>Observaciones del Radiólogo:</strong><br>${study.observations}</div>` : ''}
+    `;
+}
+
+function filterH1Studies(filter) {
+    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    document.querySelectorAll('.study-item').forEach(item => {
+        if (filter === 'all') {
+            item.style.display = 'block';
+        } else {
+            item.style.display = item.classList.contains(filter) ? 'block' : 'none';
+        }
+    });
+}
+
+function uploadDICOM() {
+    document.getElementById('file-input').click();
+}
+
+async function loadDICOM(file) {
+    try {
+        const buffer = await file.arrayBuffer();
+        const dataSet = dicomParser.parseDicom(new Uint8Array(buffer));
+        
+        const rows = dataSet.uint16('x00280010');
+        const cols = dataSet.uint16('x00280011');
+        const bitsAllocated = dataSet.uint16('x00280100') || 8;
+        const pixelDataElement = dataSet.elements.x7fe00010;
+        
+        if (!pixelDataElement) throw new Error('No pixel data');
+        
+        const pixelData = new Uint8Array(dataSet.byteArray.buffer, pixelDataElement.dataOffset, pixelDataElement.length);
+        
+        canvas.width = cols;
+        canvas.height = rows;
+        
+        const imgData = ctx.createImageData(cols, rows);
+        const data = imgData.data;
+        
+        if (bitsAllocated === 8) {
+            for (let i = 0; i < rows * cols; i++) {
+                const val = pixelData[i];
+                data[i * 4] = data[i * 4 + 1] = data[i * 4 + 2] = val;
+                data[i * 4 + 3] = 255;
+            }
+        } else if (bitsAllocated === 16) {
+            for (let i = 0; i < rows * cols; i++) {
+                const val16 = (pixelData[i * 2 + 1] << 8) | pixelData[i * 2];
+                const val8 = Math.floor((val16 / 65535) * 255);
+                data[i * 4] = data[i * 4 + 1] = data[i * 4 + 2] = val8;
+                data[i * 4 + 3] = 255;
+            }
+        }
+        
+        allFrames = [imgData];
+        ctx.putImageData(allFrames[0], 0, 0);
+        
+        document.getElementById('h1-empty').style.display = 'none';
+        canvas.style.display = 'block';
+        document.getElementById('overlay').style.display = 'block';
+        
+        autoAdjust();
+        notify('DICOM cargado correctamente', 'success');
+    } catch (error) {
+        notify('Error: ' + error.message, 'error');
+    }
+}
+
+function uploadAndSend() {
+    if (!canvas.style.display || canvas.style.display === 'none') {
+        notify('Primero cargue una ecografía DICOM', 'warning');
+        return;
+    }
+    
+    // Get last patient
+    const lastPatient = DB.patients[DB.patients.length - 1];
+    if (!lastPatient) {
+        notify('Primero registre un paciente', 'warning');
+        return;
+    }
+    
+    const study = {
+        patientId: lastPatient.id,
+        hospital: 'Hospital Regional Norte',
+        date: new Date().toISOString().split('T')[0],
+        modality: 'US',
+        observations: '',
+        radiologist: null
+    };
+    
+    DB.addStudy(study);
+    notify(`✅ Estudio ${study.id} enviado al Hospital #2`, 'success');
+    loadH1Studies();
+}
+
+// ==================== HOSPITAL 2 FUNCTIONS ====================
+function loadH2Studies() {
+    const container = document.getElementById('h2-studies');
+    container.innerHTML = '';
+    
+    DB.studies.forEach(study => {
+        const patient = DB.getPatient(study.patientId);
+        if (!patient) return;
+        
+        const item = document.createElement('div');
+        item.className = `study-item ${study.status}`;
+        item.onclick = () => selectH2Study(study.id);
+        
+        item.innerHTML = `
+            <div class="study-header">
+                <span class="study-id">${study.id}</span>
+                <span class="study-status ${study.status}">${study.status === 'pending' ? 'PENDIENTE' : 'COMPLETADO'}</span>
+            </div>
+            <div class="study-details">
+                <div><strong>Paciente:</strong> ${patient.name}</div>
+                <div><strong>Fecha:</strong> ${study.date}</div>
+                <div><strong>Hospital:</strong> ${study.hospital}</div>
+                ${study.radiologist ? `<div><strong>Radiólogo:</strong> ${study.radiologist}</div>` : ''}
+            </div>
+        `;
+        
+        container.appendChild(item);
+    });
+}
+
+function selectH2Study(studyId) {
+    DB.currentStudy = DB.getStudy(studyId);
+    const patient = DB.getPatient(DB.currentStudy.patientId);
+    
+    document.querySelectorAll('.study-item').forEach(i => i.classList.remove('active'));
+    event.target.closest('.study-item').classList.add('active');
+    
+    document.getElementById('h2-no-study').style.display = 'none';
+    document.getElementById('h2-obs-panel').style.display = 'block';
+    
+    const infoDiv = document.getElementById('h2-patient-info');
+    infoDiv.innerHTML = `
+        <div><strong>ID Estudio:</strong> ${DB.currentStudy.id}</div>
+        <div><strong>Paciente:</strong> ${patient.name}</div>
+        <div><strong>DNI:</strong> ${patient.dni}</div>
+        <div><strong>Edad:</strong> ${patient.age || '--'}</div>
+        <div><strong>Fecha:</strong> ${DB.currentStudy.date}</div>
+        <div><strong>Estado:</strong> ${DB.currentStudy.status === 'pending' ? '⏳ Pendiente' : '✅ Completado'}</div>
+    `;
+    
+    document.getElementById('h2-observations').value = DB.currentStudy.observations || '';
+}
+
+function filterH2Studies(filter) {
+    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    document.querySelectorAll('.study-item').forEach(item => {
+        if (filter === 'all') {
+            item.style.display = 'block';
+        } else {
+            item.style.display = item.classList.contains(filter) ? 'block' : 'none';
+        }
+    });
+}
+
+function saveObservations() {
+    if (!DB.currentStudy) return;
+    
+    const observations = document.getElementById('h2-observations').value;
+    DB.updateStudy(DB.currentStudy.id, {
+        observations,
+        radiologist: DB.currentUser.name
+    });
+    
+    notify('Observaciones guardadas', 'success');
+}
+
+function completeStudy() {
+    if (!DB.currentStudy) return;
+    
+    const observations = document.getElementById('h2-observations').value;
+    if (!observations.trim()) {
+        notify('Agregue observaciones primero', 'warning');
+        return;
+    }
+    
+    if (!confirm('¿Completar y enviar al Hospital #1?')) return;
+    
+    DB.updateStudy(DB.currentStudy.id, {
+        status: 'completed',
+        observations,
+        radiologist: DB.currentUser.name,
+        completedAt: new Date().toISOString()
+    });
+    
+    notify(`✅ Estudio ${DB.currentStudy.id} completado y enviado`, 'success');
+    loadH2Studies();
+    document.getElementById('h2-pending').textContent = `${DB.getPendingCount()} PENDIENTES`;
+}
+
+// ==================== IMAGE CONTROLS ====================
+function updateWindow() {
+    const center = parseInt(document.getElementById('center-slider').value);
+    const width = parseInt(document.getElementById('width-slider').value);
+    
+    document.getElementById('center-val').textContent = center;
+    document.getElementById('width-val').textContent = width;
+    
+    if (!allFrames.length) return;
+    
+    const imgData = allFrames[currentFrame];
+    const tempData = ctx.createImageData(canvas.width, canvas.height);
+    const src = imgData.data, dst = tempData.data;
+    const min = center - width / 2, max = center + width / 2;
+    
+    for (let i = 0; i < src.length; i += 4) {
+        let val = src[i];
+        if (inverted) val = 255 - val;
+        let newVal = val <= min ? 0 : val >= max ? 255 : ((val - min) / (max - min)) * 255;
+        dst[i] = dst[i + 1] = dst[i + 2] = newVal;
+        dst[i + 3] = 255;
+    }
+    
+    ctx.putImageData(tempData, 0, 0);
+}
+
+function invertColors() {
+    inverted = !inverted;
+    if (allFrames.length) updateWindow();
+}
+
+function resetView() {
+    if (document.getElementById('center-slider')) {
+        document.getElementById('center-slider').value = 128;
+        document.getElementById('width-slider').value = 255;
+    }
+    inverted = false;
+    if (allFrames.length) updateWindow();
+}
+
+function autoAdjust() {
+    if (!allFrames.length) return;
+    const data = allFrames[0].data;
+    let min = 255, max = 0;
+    for (let i = 0; i < data.length; i += 4) {
+        const val = data[i];
+        if (val < min) min = val;
+        if (val > max) max = val;
+    }
+    const center = Math.floor((min + max) / 2);
+    const width = Math.floor((max - min) * 1.2);
+    if (document.getElementById('center-slider')) {
+        document.getElementById('center-slider').value = center;
+        document.getElementById('width-slider').value = width;
+        updateWindow();
+    }
+}
+
+// ==================== UTILS ====================
+function logout() {
+    if (confirm('¿Cerrar sesión?')) location.reload();
+}
+
+function notify(msg, type = 'info') {
+    const n = document.createElement('div');
+    n.className = `notification ${type}`;
+    n.textContent = msg;
+    document.body.appendChild(n);
+    setTimeout(() => {
+        n.style.opacity = '0';
+        setTimeout(() => n.remove(), 300);
+    }, 4000);
+}
+    </script>
+</body>
+</html>

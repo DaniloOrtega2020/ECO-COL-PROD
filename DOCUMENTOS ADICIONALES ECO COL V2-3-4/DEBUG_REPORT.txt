@@ -1,0 +1,56 @@
+🔍 REPORTE DE DEBUGGING - ECO-COL PRO V4.0
+===========================================
+
+PROBLEMA REPORTADO:
+- Hospital #1: Guarda estudio ECO-008 con DICOM ✅
+- Hospital #2: Abre estudio ECO-008 → Pantalla en negro ❌
+
+CAUSA RAÍZ IDENTIFICADA:
+=======================
+
+1. PROBLEMA DE ALMACENAMIENTO:
+   - El Map() dicomFilesStorage guarda los imageIds
+   - PERO: Solo guarda el primer imageId
+   - El DICOM tiene 28 frames
+   - Resultado: Solo se procesa 1 frame en lugar de 28
+
+2. PROBLEMA DE CARGA EN H2:
+   - Función openStudyH2() busca en dicomFilesStorage
+   - Encuentra el imageId ✅
+   - PERO: No carga todos los frames
+   - Cornerstone solo muestra el primer frame
+
+3. PROBLEMA DE DETECCIÓN MULTI-FRAME:
+   - El código NO detecta que el DICOM es multi-frame
+   - No lee el tag (0028,0008) Number of Frames
+   - No genera los frameImageIds necesarios
+
+SOLUCIÓN IMPLEMENTADA:
+======================
+
+1. Mejorar handleDICOMFilesH1():
+   - Detectar número de frames del DICOM
+   - Generar imageIds para cada frame
+   - Almacenar array completo
+
+2. Mejorar uploadDICOMH1():
+   - Guardar todos los imageIds (no solo el primero)
+   - Incluir metadata del DICOM
+
+3. Mejorar openStudyH2():
+   - Cargar todos los frames
+   - Inicializar controles de cine correctamente
+   - Mostrar frame count correcto
+
+4. Agregar logs de debugging:
+   - Console.log en cada paso crítico
+   - Verificación de datos guardados
+   - Alertas si falta información
+
+TESTING REALIZADO:
+==================
+✅ Carga multi-frame (28 frames)
+✅ Almacenamiento correcto en Map()
+✅ Recuperación en Hospital #2
+✅ Reproducción de cine
+✅ Navegación frame por frame

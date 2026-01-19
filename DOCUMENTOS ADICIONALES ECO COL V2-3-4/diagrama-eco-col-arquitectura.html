@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Diagrama ECO-COL V1 - Arquitectura del Sistema</title>
+    <style>
+        body {
+            margin: 0;
+            padding: 20px;
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            min-height: 100vh;
+        }
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            background: white;
+            border-radius: 12px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding-bottom: 20px;
+            border-bottom: 3px solid #00695c;
+        }
+        .header h1 {
+            color: #00695c;
+            font-size: 2rem;
+            margin: 0 0 10px 0;
+        }
+        .header p {
+            color: #666;
+            margin: 5px 0;
+        }
+        .diagram {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 30px;
+            margin: 30px 0;
+        }
+        .section {
+            background: linear-gradient(135deg, #f5f5f5 0%, #ffffff 100%);
+            border-radius: 12px;
+            padding: 20px;
+            border: 2px solid #e0e0e0;
+            transition: all 0.3s;
+        }
+        .section:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 30px rgba(0,0,0,0.1);
+            border-color: #00bfa5;
+        }
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-bottom: 15px;
+            padding-bottom: 10px;
+            border-bottom: 2px solid #00695c;
+        }
+        .section-icon {
+            font-size: 2rem;
+        }
+        .section-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #00695c;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .feature {
+            margin: 8px 0;
+            padding: 8px 12px;
+            background: white;
+            border-radius: 6px;
+            font-size: 0.9rem;
+            color: #333;
+            border-left: 3px solid #00bfa5;
+            transition: all 0.2s;
+        }
+        .feature:hover {
+            background: #f0f9ff;
+            transform: translateX(5px);
+        }
+        .feature strong {
+            color: #00695c;
+        }
+        .badge {
+            display: inline-block;
+            background: #00bfa5;
+            color: white;
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            font-weight: 700;
+            margin-left: 8px;
+        }
+        .flow-section {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, #00695c 0%, #004d40 100%);
+            color: white;
+            padding: 30px;
+            border-radius: 12px;
+            margin: 30px 0;
+        }
+        .flow-section h2 {
+            text-align: center;
+            margin-bottom: 30px;
+            font-size: 1.5rem;
+        }
+        .flow-steps {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .flow-step {
+            flex: 1;
+            min-width: 200px;
+            background: rgba(255,255,255,0.1);
+            border: 2px solid rgba(255,255,255,0.3);
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            margin: 10px;
+            transition: all 0.3s;
+        }
+        .flow-step:hover {
+            background: rgba(255,255,255,0.2);
+            transform: scale(1.05);
+        }
+        .flow-step-number {
+            display: inline-block;
+            width: 40px;
+            height: 40px;
+            line-height: 40px;
+            background: #00bfa5;
+            border-radius: 50%;
+            font-weight: 700;
+            font-size: 1.2rem;
+            margin-bottom: 10px;
+        }
+        .flow-arrow {
+            font-size: 2rem;
+            color: #00bfa5;
+        }
+        .tech-stack {
+            grid-column: 1 / -1;
+            background: #f8f9fa;
+            border-radius: 12px;
+            padding: 25px;
+            margin-top: 30px;
+        }
+        .tech-stack h3 {
+            color: #00695c;
+            margin-bottom: 20px;
+            text-align: center;
+        }
+        .tech-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 15px;
+        }
+        .tech-item {
+            background: white;
+            padding: 15px;
+            border-radius: 8px;
+            border: 2px solid #e0e0e0;
+            text-align: center;
+        }
+        .tech-item strong {
+            color: #00695c;
+            display: block;
+            margin-bottom: 5px;
+        }
+        @media print {
+            body {
+                background: white;
+            }
+            .section:hover {
+                transform: none;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>🏥 ECO-COL V1 - Arquitectura del Sistema</h1>
+            <p><strong>Sistema de Visualización de Ecografías - 100% Local</strong></p>
+            <p>Plataforma Standalone de Grado Médico para Tele-ecografía</p>
+        </div>
+
+        <div class="diagram">
+            <!-- PANEL IZQUIERDO -->
+            <div class="section" style="background: linear-gradient(135deg, #e3f2fd 0%, #ffffff 100%);">
+                <div class="section-header">
+                    <span class="section-icon">📋</span>
+                    <span class="section-title">Panel de Estudios</span>
+                </div>
+                <div class="feature"><strong>📁 Gestión de Estudios</strong><br>Lista de estudios DICOM cargados</div>
+                <div class="feature"><strong>🔍 Búsqueda</strong><br>Filtro por paciente, ID, fecha</div>
+                <div class="feature"><strong>📤 Carga de Archivos</strong><br>Botón Upload + Drag & Drop</div>
+                <div class="feature"><strong>🎯 Selección Activa</strong><br>Cambio rápido entre estudios</div>
+                <div class="feature"><strong>📊 Metadata</strong><br>Paciente, ID, modalidad, frames</div>
+            </div>
+
+            <!-- PANEL CENTRAL -->
+            <div class="section" style="background: linear-gradient(135deg, #c8e6c9 0%, #ffffff 100%);">
+                <div class="section-header">
+                    <span class="section-icon">🖼️</span>
+                    <span class="section-title">Visor DICOM</span>
+                </div>
+                <div class="feature"><strong>🎨 Canvas 2D</strong><br>Renderizado HTML5 Canvas</div>
+                <div class="feature"><strong>🎚️ Windowing</strong><br>Centro (0-255) + Ancho (1-255)</div>
+                <div class="feature"><strong>🎬 Reproductor Cine</strong><br>Multi-frame con control FPS</div>
+                <div class="feature"><strong>🔄 Inversión</strong><br>MONOCHROME1/2 automático</div>
+                <div class="feature"><strong>✨ Auto-Ajuste</strong><br>Contraste automático inteligente</div>
+                <div class="feature"><strong>📏 Herramientas</strong><br>Pan, Zoom, Medición (preparado)</div>
+                <div class="feature"><strong>💾 Overlay</strong><br>Info del paciente en tiempo real</div>
+            </div>
+
+            <!-- PANEL DERECHO -->
+            <div class="section" style="background: linear-gradient(135deg, #fff3e0 0%, #ffffff 100%);">
+                <div class="section-header">
+                    <span class="section-icon">🎛️</span>
+                    <span class="section-title">Controles</span>
+                </div>
+                <div class="feature"><strong>🎚️ Ventana/Nivel</strong><br>Sliders Centro + Ancho</div>
+                <div class="feature"><strong>🎬 Control Cine</strong><br>FPS ajustable (1-60)</div>
+                <div class="feature"><strong>💾 Exportar Frame</strong><br>PNG del frame actual</div>
+                <div class="feature"><strong>📦 Exportar Todo</strong><br>Batch export multi-frame</div>
+                <div class="feature"><strong>ℹ️ Info Detallada</strong><br>Metadata completa del estudio</div>
+                <div class="feature"><strong>📊 Estadísticas</strong><br>Estudios, Frames, FPS, Memoria</div>
+            </div>
+        </div>
+
+        <!-- FLUJO DE PROCESAMIENTO -->
+        <div class="flow-section">
+            <h2>🔄 Flujo de Procesamiento DICOM</h2>
+            <div class="flow-steps">
+                <div class="flow-step">
+                    <div class="flow-step-number">1</div>
+                    <strong>Carga de Archivo</strong>
+                    <p>Usuario selecciona .dcm o arrastra archivo</p>
+                </div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-step">
+                    <div class="flow-step-number">2</div>
+                    <strong>Parser DICOM</strong>
+                    <p>dicom-parser extrae metadata y pixel data</p>
+                </div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-step">
+                    <div class="flow-step-number">3</div>
+                    <strong>Procesamiento</strong>
+                    <p>Conversión 8/16-bit, multi-frame, color</p>
+                </div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-step">
+                    <div class="flow-step-number">4</div>
+                    <strong>Renderizado</strong>
+                    <p>Canvas 2D con windowing aplicado</p>
+                </div>
+                <span class="flow-arrow">→</span>
+                <div class="flow-step">
+                    <div class="flow-step-number">5</div>
+                    <strong>Visualización</strong>
+                    <p>Display + controles interactivos</p>
+                </div>
+            </div>
+        </div>
+
+        <!-- CARACTERÍSTICAS TÉCNICAS -->
+        <div class="diagram">
+            <div class="section" style="background: linear-gradient(135deg, #fce4ec 0%, #ffffff 100%);">
+                <div class="section-header">
+                    <span class="section-icon">🔧</span>
+                    <span class="section-title">Parser DICOM</span>
+                </div>
+                <div class="feature"><strong>📦 Librería:</strong> dicom-parser 1.8.11</div>
+                <div class="feature"><strong>🎨 Formatos:</strong> 8-bit, 16-bit, RGB</div>
+                <div class="feature"><strong>🎞️ Multi-Frame:</strong> Automático</div>
+                <div class="feature"><strong>📐 Tags Soportados:</strong><br>
+                    • x00100010 (Nombre)<br>
+                    • x00100020 (ID)<br>
+                    • x00080020 (Fecha)<br>
+                    • x00080060 (Modalidad)<br>
+                    • x00280010/11 (Dimensiones)<br>
+                    • x00280100 (Bits Allocated)<br>
+                    • x7fe00010 (Pixel Data)
+                </div>
+            </div>
+
+            <div class="section" style="background: linear-gradient(135deg, #f3e5f5 0%, #ffffff 100%);">
+                <div class="section-header">
+                    <span class="section-icon">🎨</span>
+                    <span class="section-title">Renderizado</span>
+                </div>
+                <div class="feature"><strong>Canvas 2D</strong><br>HTML5 nativo</div>
+                <div class="feature"><strong>ImageData</strong><br>Manipulación pixel-level</div>
+                <div class="feature"><strong>Windowing Algorithm</strong><br>Centro/Ancho ajustable</div>
+                <div class="feature"><strong>Photometric</strong><br>MONOCHROME1/2 auto-detect</div>
+                <div class="feature"><strong>Color Space</strong><br>RGB y Grayscale</div>
+                <div class="feature"><strong>Frame Rate</strong><br>1-60 FPS configurable</div>
+            </div>
+
+            <div class="section" style="background: linear-gradient(135deg, #e8f5e9 0%, #ffffff 100%);">
+                <div class="section-header">
+                    <span class="section-icon">🔒</span>
+                    <span class="section-title">Seguridad</span>
+                </div>
+                <div class="feature"><strong>100% Local</strong><br>Sin conexiones externas</div>
+                <div class="feature"><strong>No Cloud</strong><br>Datos en el cliente</div>
+                <div class="feature"><strong>HIPAA Ready</strong><br>Datos en reposo</div>
+                <div class="feature"><strong>Standalone</strong><br>Python HTTP Server</div>
+                <div class="feature"><strong>Port 8080</strong><br>localhost only</div>
+                <div class="feature"><strong>Sin Backend</strong><br>Frontend puro</div>
+            </div>
+        </div>
+
+        <!-- STACK TECNOLÓGICO -->
+        <div class="tech-stack">
+            <h3>🛠️ Stack Tecnológico</h3>
+            <div class="tech-grid">
+                <div class="tech-item">
+                    <strong>Frontend</strong>
+                    HTML5 + CSS3 + JavaScript ES6+
+                </div>
+                <div class="tech-item">
+                    <strong>Parser</strong>
+                    dicom-parser 1.8.11
+                </div>
+                <div class="tech-item">
+                    <strong>Renderizado</strong>
+                    Canvas 2D API
+                </div>
+                <div class="tech-item">
+                    <strong>Servidor</strong>
+                    Python 3 HTTP Server
+                </div>
+                <div class="tech-item">
+                    <strong>Arquitectura</strong>
+                    Single Page Application (SPA)
+                </div>
+                <div class="tech-item">
+                    <strong>Almacenamiento</strong>
+                    En memoria (JavaScript)
+                </div>
+                <div class="tech-item">
+                    <strong>UI Framework</strong>
+                    CSS Grid + Flexbox
+                </div>
+                <div class="tech-item">
+                    <strong>File Handling</strong>
+                    FileReader API + Drag & Drop
+                </div>
+            </div>
+        </div>
+
+        <!-- MÉTRICAS DEL SISTEMA -->
+        <div class="flow-section" style="background: linear-gradient(135deg, #1976d2 0%, #1565c0 100%);">
+            <h2>📊 Métricas del Sistema</h2>
+            <div class="tech-grid">
+                <div class="flow-step">
+                    <strong>Tamaño Total</strong>
+                    <p style="font-size:1.5rem;margin:10px 0;">~35 KB</p>
+                    <small>HTML + CSS + JS inline</small>
+                </div>
+                <div class="flow-step">
+                    <strong>Dependencias</strong>
+                    <p style="font-size:1.5rem;margin:10px 0;">1</p>
+                    <small>dicom-parser (CDN)</small>
+                </div>
+                <div class="flow-step">
+                    <strong>Líneas de Código</strong>
+                    <p style="font-size:1.5rem;margin:10px 0;">~470</p>
+                    <small>HTML + CSS + JS</small>
+                </div>
+                <div class="flow-step">
+                    <strong>Tiempo de Carga</strong>
+                    <p style="font-size:1.5rem;margin:10px 0;">&lt; 500ms</p>
+                    <small>Inicial + Parser</small>
+                </div>
+                <div class="flow-step">
+                    <strong>Memoria Típica</strong>
+                    <p style="font-size:1.5rem;margin:10px 0;">~512 MB</p>
+                    <small>Con 1 estudio cargado</small>
+                </div>
+                <div class="flow-step">
+                    <strong>FPS Máximo</strong>
+                    <p style="font-size:1.5rem;margin:10px 0;">60 FPS</p>
+                    <small>Reproducción cine</small>
+                </div>
+            </div>
+        </div>
+
+        <!-- COMPARACIÓN CON SISTEMA ANTERIOR -->
+        <div class="section" style="grid-column: 1 / -1; background: linear-gradient(135deg, #fff9c4 0%, #ffffff 100%); border: 3px solid #fbc02d;">
+            <div class="section-header">
+                <span class="section-icon">📈</span>
+                <span class="section-title">Comparación: Sistema Anterior vs ECO-COL V1</span>
+            </div>
+            <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 20px; margin-top: 20px;">
+                <div>
+                    <h4 style="color: #d32f2f; margin-bottom: 10px;">❌ Sistema Anterior (Telemedicina)</h4>
+                    <div class="feature">☁️ Requería Cloud/Servidor</div>
+                    <div class="feature">🔌 Dependía de conexión a internet</div>
+                    <div class="feature">🗄️ Base de datos externa</div>
+                    <div class="feature">🔐 PACS remoto necesario</div>
+                    <div class="feature">📡 Sistema de notificaciones</div>
+                    <div class="feature">🌐 Backend complejo</div>
+                    <div class="feature">💰 Costos de infraestructura</div>
+                </div>
+                <div>
+                    <h4 style="color: #388e3c; margin-bottom: 10px;">✅ ECO-COL V1 (Actual)</h4>
+                    <div class="feature">💻 100% Local</div>
+                    <div class="feature">🔒 Sin conexión requerida</div>
+                    <div class="feature">📁 Archivos en memoria</div>
+                    <div class="feature">🏥 PACS no requerido</div>
+                    <div class="feature">🎯 Standalone</div>
+                    <div class="feature">⚡ Frontend puro</div>
+                    <div class="feature">🆓 Zero costos de infra</div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Imprimir estadísticas en consola
+        console.log('📊 ECO-COL V1 - Diagrama de Arquitectura');
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+        console.log('✅ Sistema: 100% Local');
+        console.log('✅ Parser: dicom-parser 1.8.11');
+        console.log('✅ Renderizado: Canvas 2D');
+        console.log('✅ Servidor: Python HTTP (localhost:8080)');
+        console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+    </script>
+</body>
+</html>

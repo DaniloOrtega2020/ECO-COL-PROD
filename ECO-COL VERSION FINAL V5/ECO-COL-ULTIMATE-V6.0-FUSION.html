@@ -1,0 +1,2047 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ECO-COL ULTIMATE V6.0 - Sistema Completo de Tele-Radiología</title>
+    
+    <!-- Cornerstone DICOM Libraries - Estándar de la industria -->
+    <script src="https://cdn.jsdelivr.net/npm/cornerstone-core@2.6.1/dist/cornerstone.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/cornerstone-math@0.1.10/dist/cornerstoneMath.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/cornerstone-tools@6.0.10/dist/cornerstoneTools.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dicom-parser@1.8.13/dist/dicomParser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/cornerstone-wado-image-loader@4.13.2/dist/cornerstoneWADOImageLoader.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --primary: #1976d2;
+            --primary-dark: #1565c0;
+            --accent: #00bfa5;
+            --success: #4caf50;
+            --warning: #ff9800;
+            --danger: #f44336;
+            --bg-dark: #121212;
+            --bg-medium: #1e1e1e;
+            --bg-light: #252525;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --border: #333;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        /* ==================== HEADER ==================== */
+        .header {
+            background: linear-gradient(135deg, var(--primary), #1e88e5);
+            padding: 1rem 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+        
+        .header h1 {
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .badge {
+            background: rgba(255,255,255,0.2);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+        
+        .status-bar {
+            display: flex;
+            gap: 2rem;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        /* ==================== TABS ==================== */
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            max-width: 1800px;
+            margin: 1rem auto 0;
+            padding: 0 2rem;
+        }
+        
+        .tab {
+            padding: 0.8rem 1.5rem;
+            background: var(--bg-medium);
+            border: none;
+            color: var(--text-secondary);
+            cursor: pointer;
+            border-radius: 8px 8px 0 0;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .tab:hover {
+            background: var(--bg-light);
+        }
+        
+        .tab.active {
+            background: var(--bg-dark);
+            color: var(--accent);
+        }
+        
+        /* ==================== CONTAINER ==================== */
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* ==================== SECTION ==================== */
+        .section {
+            background: var(--bg-medium);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        
+        .section h2 {
+            color: var(--accent);
+            margin-bottom: 1.5rem;
+            font-size: 1.3rem;
+        }
+        
+        /* ==================== FORM ==================== */
+        .form-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            color: var(--text-secondary);
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.8rem;
+            background: rgba(0,0,0,0.3);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            border-radius: 6px;
+            font-family: inherit;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+        }
+        
+        /* ==================== BUTTON ==================== */
+        .btn {
+            padding: 0.8rem 1.5rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.95rem;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-success:hover {
+            background: #45a049;
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        /* ==================== GRID ==================== */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1.5rem;
+        }
+        
+        .card {
+            background: var(--bg-light);
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-4px);
+            box-shadow: 0 8px 16px rgba(0,191,165,0.2);
+            border-color: var(--accent);
+        }
+        
+        .card h3 {
+            color: var(--accent);
+            margin-bottom: 0.8rem;
+        }
+        
+        .card p {
+            color: var(--text-secondary);
+            margin: 0.3rem 0;
+            font-size: 0.9rem;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 0.25rem 0.75rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-top: 0.5rem;
+            margin-right: 0.5rem;
+        }
+        
+        .status-badge.pending {
+            background: var(--warning);
+            color: #000;
+        }
+        
+        .status-badge.completed {
+            background: var(--success);
+            color: #fff;
+        }
+        
+        .status-badge.has-dicom {
+            background: var(--primary);
+            color: #fff;
+        }
+        
+        /* ==================== VIEWER ==================== */
+        .viewer-layout {
+            display: grid;
+            grid-template-columns: 1fr 360px;
+            gap: 1.5rem;
+            height: calc(100vh - 300px);
+        }
+        
+        .viewer-main {
+            background: #000;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .viewer-toolbar {
+            background: rgba(0,0,0,0.9);
+            padding: 0.8rem;
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .viewer-content {
+            flex: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .dicom-element {
+            width: 512px;
+            height: 512px;
+            background: #000;
+        }
+        
+        .viewer-sidebar {
+            background: var(--bg-light);
+            padding: 1.5rem;
+            border-radius: 8px;
+            overflow-y: auto;
+        }
+        
+        .info-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .info-group h3 {
+            color: var(--accent);
+            font-size: 0.9rem;
+            margin-bottom: 1rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        .info-group p {
+            margin: 0.5rem 0;
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        .slider-control {
+            margin-bottom: 1rem;
+        }
+        
+        .slider-control label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+        }
+        
+        .slider {
+            width: 100%;
+        }
+        
+        /* ==================== CINE CONTROLS ==================== */
+        .cine-controls {
+            position: absolute;
+            bottom: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            background: rgba(0,0,0,0.9);
+            padding: 0.8rem 1.5rem;
+            border-radius: 30px;
+            display: flex;
+            gap: 1rem;
+            align-items: center;
+            border: 1px solid var(--accent);
+        }
+        
+        .cine-btn {
+            background: var(--primary);
+            border: none;
+            color: white;
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 1rem;
+        }
+        
+        .cine-btn:hover {
+            background: var(--accent);
+            transform: scale(1.1);
+        }
+        
+        .frame-display {
+            color: var(--accent);
+            font-weight: 700;
+            min-width: 80px;
+            text-align: center;
+        }
+        
+        /* ==================== UPLOAD ZONE ==================== */
+        .upload-zone {
+            border: 2px dashed var(--border);
+            border-radius: 8px;
+            padding: 3rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .upload-zone:hover,
+        .upload-zone.dragover {
+            border-color: var(--accent);
+            background: rgba(0,191,165,0.1);
+        }
+        
+        .upload-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+        
+        /* ==================== EMPTY STATE ==================== */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+        
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+        
+        /* ==================== NOTIFICATION ==================== */
+        .notification {
+            position: fixed;
+            top: 100px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            box-shadow: 0 8px 24px rgba(0,0,0,0.4);
+            z-index: 10000;
+            animation: slideIn 0.3s;
+            font-weight: 600;
+        }
+        
+        .notification.success { background: var(--success); }
+        .notification.error { background: var(--danger); }
+        .notification.info { background: var(--primary); }
+        .notification.warning { background: var(--warning); color: #000; }
+        
+        @keyframes slideIn {
+            from { transform: translateX(400px); opacity: 0; }
+            to { transform: translateX(0); opacity: 1; }
+        }
+        
+        @keyframes slideOut {
+            from { transform: translateX(0); opacity: 1; }
+            to { transform: translateX(400px); opacity: 0; }
+        }
+        
+        /* ==================== LOADING ==================== */
+        .loading-overlay {
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.9);
+            display: none;
+            align-items: center;
+            justify-content: center;
+            z-index: 10001;
+        }
+        
+        .loading-content {
+            text-align: center;
+            color: var(--accent);
+        }
+        
+        .spinner {
+            width: 60px;
+            height: 60px;
+            border: 6px solid var(--border);
+            border-top-color: var(--accent);
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1.5rem;
+        }
+        
+        @keyframes spin {
+            to { transform: rotate(360deg); }
+        }
+        
+        /* ==================== STATS GRID ==================== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 1.5rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: var(--bg-light);
+            padding: 1.5rem;
+            border-radius: 8px;
+            text-align: center;
+            border: 1px solid var(--border);
+        }
+        
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.85rem;
+            margin-bottom: 0.5rem;
+            text-transform: uppercase;
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent);
+        }
+        
+        /* Input file hidden */
+        input[type="file"] {
+            display: none;
+        }
+    </style>
+</head>
+<body>
+    <!-- Header -->
+    <div class="header">
+        <div class="header-content">
+            <h1>🏥 ECO-COL ULTIMATE V6.0 <span class="badge">SISTEMA COMPLETO</span></h1>
+            <div style="display: flex; gap: 2rem; font-size: 0.9rem;">
+                <div>📍 Popayán, Colombia</div>
+                <div>🔒 IndexedDB Persistente</div>
+                <div id="system-status">🟢 Sistema Activo</div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Tabs -->
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('hospital1')">🏥 Hospital #1 (Periférico)</button>
+        <button class="tab" onclick="switchTab('hospital2')">👨‍⚕️ Hospital #2 (Radiólogos)</button>
+        <button class="tab" onclick="switchTab('admin')">⚙️ Administrador</button>
+    </div>
+    
+    <div class="container">
+        <!-- ==================== HOSPITAL 1 TAB ==================== -->
+        <div id="tab-hospital1" class="tab-content active">
+            <!-- Main View -->
+            <div id="h1-main-view">
+                <!-- Registro de Paciente -->
+                <div class="section">
+                    <h2>➕ Registrar Paciente y Crear Estudio</h2>
+                    <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 1rem;">
+                        <div class="form-group">
+                            <label>Nombre Completo *</label>
+                            <input type="text" id="h1-patient-name">
+                        </div>
+                        <div class="form-group">
+                            <label>DNI / Cédula *</label>
+                            <input type="text" id="h1-patient-dni">
+                        </div>
+                        <div class="form-group">
+                            <label>Edad</label>
+                            <input type="number" id="h1-patient-age">
+                        </div>
+                    </div>
+                    <div style="display: grid; grid-template-columns: repeat(2, 1fr); gap: 1rem;">
+                        <div class="form-group">
+                            <label>Género</label>
+                            <select id="h1-patient-gender">
+                                <option value="M">Masculino</option>
+                                <option value="F">Femenino</option>
+                            </select>
+                        </div>
+                        <div class="form-group">
+                            <label>Teléfono</label>
+                            <input type="tel" id="h1-patient-phone">
+                        </div>
+                    </div>
+                    <button class="btn btn-primary" onclick="createPatient()">💾 Crear Paciente y Estudio</button>
+                </div>
+                
+                <!-- Cargar DICOM -->
+                <div class="section">
+                    <h2>📤 Cargar Ecografía DICOM</h2>
+                    <div class="form-group">
+                        <label>Seleccionar Estudio</label>
+                        <select id="h1-study-select">
+                            <option value="">Seleccionar estudio...</option>
+                        </select>
+                    </div>
+                    
+                    <div class="upload-zone" id="h1-upload-zone">
+                        <div class="upload-icon">📁</div>
+                        <p style="font-size: 1.1rem; margin-bottom: 0.5rem;">Haz clic o arrastra archivos DICOM aquí</p>
+                        <p style="font-size: 0.9rem; opacity: 0.7;">Soporta: .dcm, multi-frame, 8/16-bit</p>
+                    </div>
+                    <input type="file" id="h1-dicom-file" accept=".dcm,.dicom" multiple>
+                    
+                    <button class="btn btn-success" style="width: 100%; margin-top: 1rem;" onclick="sendStudyToH2()" id="h1-send-btn" disabled>
+                        🚀 ENVIAR AL HOSPITAL #2
+                    </button>
+                </div>
+                
+                <!-- Visor DICOM Hospital 1 -->
+                <div class="section">
+                    <h2>🖼️ Vista Previa DICOM</h2>
+                    <div class="viewer-layout">
+                        <div class="viewer-main">
+                            <div class="viewer-toolbar">
+                                <button class="btn btn-primary" onclick="setToolH1('Wwwc')">🎨 Ventana</button>
+                                <button class="btn btn-primary" onclick="setToolH1('Zoom')">🔍 Zoom</button>
+                                <button class="btn btn-primary" onclick="setToolH1('Pan')">✋ Pan</button>
+                                <button class="btn btn-primary" onclick="setToolH1('Length')">📏 Medir</button>
+                                <button class="btn btn-primary" onclick="resetH1()">↻ Reset</button>
+                            </div>
+                            <div class="viewer-content">
+                                <div id="h1-dicom-element" class="dicom-element">
+                                    <div class="empty-state">
+                                        <div class="empty-state-icon">🖼️</div>
+                                        <p>Cargue un archivo DICOM</p>
+                                    </div>
+                                </div>
+                                <div class="cine-controls" id="h1-cine" style="display: none;">
+                                    <button class="cine-btn" onclick="playPauseH1()" id="h1-play-btn">▶</button>
+                                    <button class="cine-btn" onclick="prevFrameH1()">⏮</button>
+                                    <span class="frame-display" id="h1-frame-display">1/1</span>
+                                    <button class="cine-btn" onclick="nextFrameH1()">⏭</button>
+                                    <button class="cine-btn" onclick="stopH1()">⏹</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="viewer-sidebar">
+                            <div class="info-group">
+                                <h3>👤 Información del Paciente</h3>
+                                <p><strong>Nombre:</strong> <span id="h1-patient-name-display">-</span></p>
+                                <p><strong>ID:</strong> <span id="h1-patient-id-display">-</span></p>
+                                <p><strong>Edad:</strong> <span id="h1-patient-age-display">-</span></p>
+                                <p><strong>Género:</strong> <span id="h1-patient-gender-display">-</span></p>
+                            </div>
+                            
+                            <div class="info-group">
+                                <h3>📋 Información del Estudio</h3>
+                                <p><strong>Modalidad:</strong> <span id="h1-modality">-</span></p>
+                                <p><strong>Fecha:</strong> <span id="h1-study-date">-</span></p>
+                                <p><strong>Tamaño:</strong> <span id="h1-image-size">-</span></p>
+                                <p><strong>Frames:</strong> <span id="h1-num-frames">-</span></p>
+                            </div>
+                            
+                            <div class="info-group">
+                                <h3>🎨 Controles de Imagen</h3>
+                                <div class="slider-control">
+                                    <label>
+                                        <span>Window Center</span>
+                                        <span id="h1-wc-value">-</span>
+                                    </label>
+                                    <input type="range" class="slider" id="h1-window-center" min="-1000" max="4000" value="40" oninput="updateWindowH1()">
+                                </div>
+                                <div class="slider-control">
+                                    <label>
+                                        <span>Window Width</span>
+                                        <span id="h1-ww-value">-</span>
+                                    </label>
+                                    <input type="range" class="slider" id="h1-window-width" min="1" max="4000" value="400" oninput="updateWindowH1()">
+                                </div>
+                                <div class="slider-control">
+                                    <label>
+                                        <span>Zoom</span>
+                                        <span id="h1-zoom-value">1.0x</span>
+                                    </label>
+                                    <input type="range" class="slider" id="h1-zoom-slider" min="0.5" max="5" step="0.1" value="1" oninput="updateZoomH1()">
+                                </div>
+                                <div class="slider-control">
+                                    <label>
+                                        <span>FPS</span>
+                                        <span id="h1-fps-value">20</span>
+                                    </label>
+                                    <select class="slider" id="h1-fps-select" onchange="updateFPSH1()" style="width: 100%; padding: 0.5rem;">
+                                        <option value="5">5 FPS</option>
+                                        <option value="10">10 FPS</option>
+                                        <option value="15">15 FPS</option>
+                                        <option value="20" selected>20 FPS</option>
+                                        <option value="30">30 FPS</option>
+                                        <option value="60">60 FPS</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Lista de Estudios -->
+                <div class="section">
+                    <h2>📋 Mis Estudios</h2>
+                    <div class="grid" id="h1-studies-list">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📋</div>
+                            <p>No hay estudios creados</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Review View (para estudios completados) -->
+            <div id="h1-review-view" style="display: none;">
+                <div class="section">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h2>🖼️ Revisión de Estudio Completado</h2>
+                        <button class="btn btn-primary" onclick="backToMainH1()">← Volver a Mis Estudios</button>
+                    </div>
+                    
+                    <div class="viewer-layout">
+                        <div class="viewer-main">
+                            <div class="viewer-toolbar">
+                                <button class="btn btn-primary" onclick="setToolH1Review('Wwwc')">🎨 Ventana</button>
+                                <button class="btn btn-primary" onclick="setToolH1Review('Zoom')">🔍 Zoom</button>
+                                <button class="btn btn-primary" onclick="setToolH1Review('Pan')">✋ Pan</button>
+                                <button class="btn btn-primary" onclick="setToolH1Review('Length')">📏 Medir</button>
+                                <button class="btn btn-primary" onclick="resetH1Review()">↻ Reset</button>
+                            </div>
+                            <div class="viewer-content">
+                                <div id="h1-review-element" class="dicom-element"></div>
+                                <div class="cine-controls" id="h1-review-cine" style="display: none;">
+                                    <button class="cine-btn" onclick="playPauseH1Review()" id="h1-review-play-btn">▶</button>
+                                    <button class="cine-btn" onclick="prevFrameH1Review()">⏮</button>
+                                    <span class="frame-display" id="h1-review-frame-display">1/1</span>
+                                    <button class="cine-btn" onclick="nextFrameH1Review()">⏭</button>
+                                    <button class="cine-btn" onclick="stopH1Review()">⏹</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="viewer-sidebar">
+                            <div class="info-group">
+                                <h3>👤 Información del Paciente</h3>
+                                <p><strong>Nombre:</strong> <span id="h1-review-patient-name">-</span></p>
+                                <p><strong>DNI:</strong> <span id="h1-review-patient-dni">-</span></p>
+                                <p><strong>Estudio:</strong> <span id="h1-review-study-id">-</span></p>
+                            </div>
+                            
+                            <div class="info-group" style="background: rgba(0,191,165,0.1); padding: 1rem; border-radius: 8px; border: 2px solid var(--accent);">
+                                <h3>📋 Diagnóstico del Radiólogo</h3>
+                                <div style="background: rgba(0,0,0,0.3); padding: 1rem; border-radius: 6px; margin-top: 0.5rem;">
+                                    <p><strong>Radiólogo:</strong> <span id="h1-review-radiologist" style="color: var(--accent);">-</span></p>
+                                    <p><strong>Fecha:</strong> <span id="h1-review-date">-</span></p>
+                                    <hr style="border: 1px solid var(--border); margin: 1rem 0;">
+                                    <div id="h1-review-observations" style="white-space: pre-wrap; line-height: 1.6;">-</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== HOSPITAL 2 TAB ==================== -->
+        <div id="tab-hospital2" class="tab-content">
+            <!-- Login -->
+            <div id="h2-login" class="section">
+                <h2>👨‍⚕️ Seleccionar Radiólogo</h2>
+                <div class="grid">
+                    <div class="card" onclick="loginH2('Dr. Danilo Ortega')">
+                        <h3>Dr. Danilo Ortega</h3>
+                        <p><strong>Especialidad:</strong> Radiología Abdominal</p>
+                        <p><strong>Pendientes:</strong> <span id="ortega-pending">0</span></p>
+                    </div>
+                    <div class="card" onclick="loginH2('Dra. María Martínez')">
+                        <h3>Dra. María Martínez</h3>
+                        <p><strong>Especialidad:</strong> Ecografía Obstétrica</p>
+                        <p><strong>Pendientes:</strong> <span id="martinez-pending">0</span></p>
+                    </div>
+                    <div class="card" onclick="loginH2('Dr. Carlos Rodríguez')">
+                        <h3>Dr. Carlos Rodríguez</h3>
+                        <p><strong>Especialidad:</strong> Ecografía Cardíaca</p>
+                        <p><strong>Pendientes:</strong> <span id="rodriguez-pending">0</span></p>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Worklist -->
+            <div id="h2-worklist" style="display: none;">
+                <div class="section">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h2>📋 Lista de Trabajo</h2>
+                        <button class="btn btn-danger" onclick="logoutH2()">🚪 Cerrar Sesión</button>
+                    </div>
+                    <p style="margin-bottom: 1rem;">Radiólogo: <strong id="h2-current-user" style="color: var(--accent);">-</strong></p>
+                    <div class="grid" id="h2-studies-list">
+                        <div class="empty-state">
+                            <div class="empty-state-icon">📭</div>
+                            <p>No hay estudios pendientes</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Viewer -->
+            <div id="h2-viewer" style="display: none;">
+                <div class="section">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem;">
+                        <h2>🖼️ Visor DICOM - Lectura de Estudio</h2>
+                        <button class="btn btn-primary" onclick="backToWorklistH2()">← Volver a Lista</button>
+                    </div>
+                    
+                    <div class="viewer-layout">
+                        <div class="viewer-main">
+                            <div class="viewer-toolbar">
+                                <button class="btn btn-primary" onclick="setToolH2('Wwwc')">🎨 Ventana</button>
+                                <button class="btn btn-primary" onclick="setToolH2('Zoom')">🔍 Zoom</button>
+                                <button class="btn btn-primary" onclick="setToolH2('Pan')">✋ Pan</button>
+                                <button class="btn btn-primary" onclick="setToolH2('Length')">📏 Medir</button>
+                                <button class="btn btn-primary" onclick="resetH2()">↻ Reset</button>
+                            </div>
+                            <div class="viewer-content">
+                                <div id="h2-dicom-element" class="dicom-element"></div>
+                                <div class="cine-controls" id="h2-cine" style="display: none;">
+                                    <button class="cine-btn" onclick="playPauseH2()" id="h2-play-btn">▶</button>
+                                    <button class="cine-btn" onclick="prevFrameH2()">⏮</button>
+                                    <span class="frame-display" id="h2-frame-display">1/1</span>
+                                    <button class="cine-btn" onclick="nextFrameH2()">⏭</button>
+                                    <button class="cine-btn" onclick="stopH2()">⏹</button>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="viewer-sidebar">
+                            <div class="info-group">
+                                <h3>👤 Información del Paciente</h3>
+                                <p><strong>Nombre:</strong> <span id="h2-patient-name">-</span></p>
+                                <p><strong>DNI:</strong> <span id="h2-patient-dni">-</span></p>
+                                <p><strong>Estudio:</strong> <span id="h2-study-id">-</span></p>
+                            </div>
+                            
+                            <div class="info-group">
+                                <h3>🎨 Controles</h3>
+                                <div class="slider-control">
+                                    <label>
+                                        <span>Window Center</span>
+                                        <span id="h2-wc-value">-</span>
+                                    </label>
+                                    <input type="range" class="slider" id="h2-window-center" min="-1000" max="4000" value="40" oninput="updateWindowH2()">
+                                </div>
+                                <div class="slider-control">
+                                    <label>
+                                        <span>Window Width</span>
+                                        <span id="h2-ww-value">-</span>
+                                    </label>
+                                    <input type="range" class="slider" id="h2-window-width" min="1" max="4000" value="400" oninput="updateWindowH2()">
+                                </div>
+                            </div>
+                            
+                            <div class="info-group">
+                                <h3>📝 Observaciones</h3>
+                                <textarea id="h2-observations" rows="8" placeholder="Escribir hallazgos y diagnóstico..." style="width: 100%; padding: 0.8rem; background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: white; border-radius: 6px;"></textarea>
+                                <button class="btn btn-primary" style="width: 100%; margin-top: 0.5rem;" onclick="saveObservationsH2()">💾 Guardar</button>
+                                <button class="btn btn-success" style="width: 100%; margin-top: 0.5rem;" onclick="completeStudyH2()">✅ Completar y Enviar</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- ==================== ADMIN TAB ==================== -->
+        <div id="tab-admin" class="tab-content">
+            <div class="section">
+                <h2>📊 Estadísticas del Sistema</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Estudios</div>
+                        <div class="stat-value" id="admin-total">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Pendientes</div>
+                        <div class="stat-value" id="admin-pending" style="color: var(--warning);">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Completados</div>
+                        <div class="stat-value" id="admin-completed" style="color: var(--success);">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Pacientes</div>
+                        <div class="stat-value" id="admin-patients">0</div>
+                    </div>
+                </div>
+            </div>
+            
+            <div class="section">
+                <h2>📋 Todos los Estudios</h2>
+                <div class="grid" id="admin-studies-list"></div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Loading Overlay -->
+    <div class="loading-overlay" id="loading-overlay">
+        <div class="loading-content">
+            <div class="spinner"></div>
+            <div id="loading-text">Procesando...</div>
+        </div>
+    </div>
+    
+    <script>
+        // ==================== CORNERSTONE INITIALIZATION ====================
+        cornerstoneWADOImageLoader.external.cornerstone = cornerstone;
+        cornerstoneWADOImageLoader.external.dicomParser = dicomParser;
+        cornerstoneTools.external.cornerstone = cornerstone;
+        cornerstoneTools.external.Hammer = Hammer;
+        cornerstoneTools.external.cornerstoneMath = cornerstoneMath;
+        
+        cornerstoneTools.init();
+        cornerstoneTools.addTool(cornerstoneTools.WwwcTool);
+        cornerstoneTools.addTool(cornerstoneTools.ZoomTool);
+        cornerstoneTools.addTool(cornerstoneTools.PanTool);
+        cornerstoneTools.addTool(cornerstoneTools.LengthTool);
+
+        // ==================== INDEXEDDB DATABASE MANAGER ====================
+        class DatabaseManager {
+            constructor() {
+                this.db = null;
+                this.cache = new Map();
+            }
+            
+            async init() {
+                return new Promise((resolve, reject) => {
+                    const request = indexedDB.open('ECO-COL-ULTIMATE-V6', 1);
+                    
+                    request.onupgradeneeded = (e) => {
+                        const db = e.target.result;
+                        
+                        if (!db.objectStoreNames.contains('patients')) {
+                            db.createObjectStore('patients', { keyPath: 'id' });
+                        }
+                        
+                        if (!db.objectStoreNames.contains('studies')) {
+                            db.createObjectStore('studies', { keyPath: 'id' });
+                        }
+                        
+                        if (!db.objectStoreNames.contains('dicom_files')) {
+                            db.createObjectStore('dicom_files', { keyPath: 'studyId' });
+                        }
+                        
+                        console.log('✅ IndexedDB schema created');
+                    };
+                    
+                    request.onsuccess = (e) => {
+                        this.db = e.target.result;
+                        console.log('✅ IndexedDB initialized');
+                        resolve();
+                    };
+                    
+                    request.onerror = () => {
+                        console.error('❌ IndexedDB error:', request.error);
+                        reject(request.error);
+                    };
+                });
+            }
+            
+            // Patients
+            async addPatient(patient) {
+                patient.id = 'PAC-' + String(Date.now()).slice(-8);
+                patient.createdAt = new Date().toISOString();
+                
+                return new Promise((resolve, reject) => {
+                    const tx = this.db.transaction(['patients'], 'readwrite');
+                    const store = tx.objectStore('patients');
+                    const request = store.add(patient);
+                    
+                    request.onsuccess = () => {
+                        console.log(`✅ Patient added: ${patient.id}`);
+                        resolve(patient);
+                    };
+                    
+                    request.onerror = () => reject(request.error);
+                });
+            }
+            
+            async getAllPatients() {
+                return new Promise((resolve, reject) => {
+                    const tx = this.db.transaction(['patients'], 'readonly');
+                    const store = tx.objectStore('patients');
+                    const request = store.getAll();
+                    
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            }
+            
+            async getPatient(id) {
+                return new Promise((resolve, reject) => {
+                    const tx = this.db.transaction(['patients'], 'readonly');
+                    const store = tx.objectStore('patients');
+                    const request = store.get(id);
+                    
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            }
+            
+            // Studies
+            async addStudy(study) {
+                study.id = 'ECO-' + String(Date.now()).slice(-8);
+                study.status = 'pending';
+                study.createdAt = new Date().toISOString();
+                study.radiologist = null;
+                study.observations = '';
+                study.completedAt = null;
+                study.hasDICOM = false;
+                
+                return new Promise((resolve, reject) => {
+                    const tx = this.db.transaction(['studies'], 'readwrite');
+                    const store = tx.objectStore('studies');
+                    const request = store.add(study);
+                    
+                    request.onsuccess = () => {
+                        console.log(`✅ Study added: ${study.id}`);
+                        resolve(study);
+                    };
+                    
+                    request.onerror = () => reject(request.error);
+                });
+            }
+            
+            async updateStudy(id, updates) {
+                const study = await this.getStudy(id);
+                if (!study) throw new Error(`Study ${id} not found`);
+                
+                Object.assign(study, updates);
+                
+                return new Promise((resolve, reject) => {
+                    const tx = this.db.transaction(['studies'], 'readwrite');
+                    const store = tx.objectStore('studies');
+                    const request = store.put(study);
+                    
+                    request.onsuccess = () => {
+                        console.log(`✅ Study updated: ${id}`);
+                        resolve(study);
+                    };
+                    
+                    request.onerror = () => reject(request.error);
+                });
+            }
+            
+            async getStudy(id) {
+                return new Promise((resolve, reject) => {
+                    const tx = this.db.transaction(['studies'], 'readonly');
+                    const store = tx.objectStore('studies');
+                    const request = store.get(id);
+                    
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            }
+            
+            async getAllStudies() {
+                return new Promise((resolve, reject) => {
+                    const tx = this.db.transaction(['studies'], 'readonly');
+                    const store = tx.objectStore('studies');
+                    const request = store.getAll();
+                    
+                    request.onsuccess = () => resolve(request.result);
+                    request.onerror = () => reject(request.error);
+                });
+            }
+            
+            // DICOM Files
+            async saveDICOMFile(studyId, fileBlob, metadata) {
+                const arrayBuffer = await fileBlob.arrayBuffer();
+                
+                const data = {
+                    studyId,
+                    dicomData: arrayBuffer,
+                    metadata: {
+                        ...metadata,
+                        uploadedAt: new Date().toISOString(),
+                        size: arrayBuffer.byteLength
+                    }
+                };
+                
+                return new Promise((resolve, reject) => {
+                    const tx = this.db.transaction(['dicom_files'], 'readwrite');
+                    const store = tx.objectStore('dicom_files');
+                    const request = store.put(data);
+                    
+                    request.onsuccess = () => {
+                        console.log(`✅ DICOM saved: ${studyId} (${(arrayBuffer.byteLength / 1024).toFixed(2)} KB)`);
+                        this.cache.set('dicom_' + studyId, data);
+                        resolve(data);
+                    };
+                    
+                    request.onerror = () => reject(request.error);
+                });
+            }
+            
+            async getDICOMFile(studyId) {
+                if (this.cache.has('dicom_' + studyId)) {
+                    console.log(`⚡ Cache hit: ${studyId}`);
+                    return this.cache.get('dicom_' + studyId);
+                }
+                
+                return new Promise((resolve, reject) => {
+                    const tx = this.db.transaction(['dicom_files'], 'readonly');
+                    const store = tx.objectStore('dicom_files');
+                    const request = store.get(studyId);
+                    
+                    request.onsuccess = () => {
+                        const data = request.result;
+                        if (data) {
+                            console.log(`✅ DICOM loaded: ${studyId}`);
+                            this.cache.set('dicom_' + studyId, data);
+                        }
+                        resolve(data);
+                    };
+                    
+                    request.onerror = () => reject(request.error);
+                });
+            }
+        }
+
+        const DB = new DatabaseManager();
+        
+        // Global Variables
+        let h1Element = null;
+        let h1ImageIds = [];
+        let h1CurrentIndex = 0;
+        let h1PlayInterval = null;
+        let h1FPS = 20;
+        let h1CurrentStudyId = null;
+        let h1CurrentFile = null;
+        
+        let h1ReviewElement = null;
+        let h1ReviewImageIds = [];
+        let h1ReviewCurrentIndex = 0;
+        let h1ReviewPlayInterval = null;
+        
+        let h2Element = null;
+        let h2ImageIds = [];
+        let h2CurrentIndex = 0;
+        let h2PlayInterval = null;
+        let h2CurrentRadiologist = null;
+        let h2CurrentStudy = null;
+
+        // ==================== INITIALIZATION ====================
+        window.addEventListener('DOMContentLoaded', async () => {
+            try {
+                showLoading('Inicializando sistema...');
+                await DB.init();
+                hideLoading();
+                notify('✅ ECO-COL ULTIMATE V6.0 listo', 'success');
+                console.log('✅ System initialized');
+            } catch (error) {
+                hideLoading();
+                notify('❌ Error al inicializar: ' + error.message, 'error');
+                console.error('❌ Init error:', error);
+            }
+        });
+
+        // ==================== HOSPITAL 1 FUNCTIONS ====================
+        
+        async function createPatient() {
+            const name = document.getElementById('h1-patient-name').value.trim();
+            const dni = document.getElementById('h1-patient-dni').value.trim();
+            const age = parseInt(document.getElementById('h1-patient-age').value) || 0;
+            const gender = document.getElementById('h1-patient-gender').value;
+            const phone = document.getElementById('h1-patient-phone').value.trim();
+            
+            if (!name || !dni) {
+                notify('Complete los campos obligatorios', 'error');
+                return;
+            }
+            
+            try {
+                // Crear paciente
+                const patient = await DB.addPatient({ name, dni, age, gender, phone });
+                
+                // Crear estudio asociado
+                const study = await DB.addStudy({
+                    patientId: patient.id,
+                    hospital: 'Hospital Regional Norte - Popayán',
+                    modality: 'US',
+                    date: new Date().toISOString().split('T')[0]
+                });
+                
+                notify(`✅ Paciente y estudio creados: ${study.id}`, 'success');
+                
+                // Limpiar formulario
+                document.getElementById('h1-patient-name').value = '';
+                document.getElementById('h1-patient-dni').value = '';
+                document.getElementById('h1-patient-age').value = '';
+                document.getElementById('h1-patient-phone').value = '';
+                
+                // Recargar lista
+                await loadH1Studies();
+            } catch (error) {
+                notify('❌ Error: ' + error.message, 'error');
+            }
+        }
+
+        async function loadH1Studies() {
+            const select = document.getElementById('h1-study-select');
+            const list = document.getElementById('h1-studies-list');
+            const studies = await DB.getAllStudies();
+            
+            select.innerHTML = '<option value="">Seleccionar estudio...</option>';
+            list.innerHTML = '';
+            
+            if (studies.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <p>No hay estudios creados</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            for (const study of studies) {
+                const patient = await DB.getPatient(study.patientId);
+                
+                // Agregar a select
+                const option = document.createElement('option');
+                option.value = study.id;
+                option.textContent = `${study.id} - ${patient ? patient.name : 'N/A'}`;
+                select.appendChild(option);
+                
+                // Agregar a lista
+                const card = document.createElement('div');
+                card.className = 'card';
+                
+                // Si está completado, permitir abrir visor de revisión
+                if (study.status === 'completed') {
+                    card.onclick = () => openReviewH1(study.id);
+                }
+                
+                card.innerHTML = `
+                    <h3>${study.id}</h3>
+                    <p><strong>Paciente:</strong> ${patient ? patient.name : 'N/A'}</p>
+                    <p><strong>DNI:</strong> ${patient ? patient.dni : 'N/A'}</p>
+                    <p><strong>Fecha:</strong> ${study.date}</p>
+                    <span class="status-badge ${study.status}">${study.status === 'pending' ? '⏳ PENDIENTE' : '✅ COMPLETADO'}</span>
+                    ${study.hasDICOM ? '<span class="status-badge has-dicom">📁 DICOM</span>' : ''}
+                    ${study.status === 'completed' && study.observations ? `
+                        <div style="margin-top: 1rem; padding: 1rem; background: rgba(0,191,165,0.1); border-radius: 6px; border-left: 4px solid var(--accent);">
+                            <p style="color: var(--accent); font-weight: 700; margin-bottom: 0.5rem;">📋 Diagnóstico:</p>
+                            <p style="color: var(--text-primary);"><strong>Radiólogo:</strong> ${study.radiologist}</p>
+                            <p style="color: var(--text-secondary); font-style: italic; margin-top: 0.5rem;">"${study.observations.substring(0, 100)}${study.observations.length > 100 ? '...' : ''}"</p>
+                            <button onclick="event.stopPropagation(); openReviewH1('${study.id}')" style="margin-top: 0.8rem; padding: 0.6rem 1.2rem; background: var(--primary); color: white; border: none; border-radius: 6px; font-weight: 600; cursor: pointer;" onmouseover="this.style.background='var(--primary-dark)'" onmouseout="this.style.background='var(--primary)'">
+                                🖼️ VER ECOGRAFÍA CON OBSERVACIONES
+                            </button>
+                        </div>
+                    ` : ''}
+                `;
+                list.appendChild(card);
+            }
+        }
+
+        // Setup upload zone H1
+        const h1UploadZone = document.getElementById('h1-upload-zone');
+        const h1FileInput = document.getElementById('h1-dicom-file');
+        
+        h1UploadZone.addEventListener('click', () => {
+            const studyId = document.getElementById('h1-study-select').value;
+            if (!studyId) {
+                notify('⚠️ Seleccione un estudio primero', 'warning');
+                return;
+            }
+            h1FileInput.click();
+        });
+        
+        h1UploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            h1UploadZone.classList.add('dragover');
+        });
+        
+        h1UploadZone.addEventListener('dragleave', () => {
+            h1UploadZone.classList.remove('dragover');
+        });
+        
+        h1UploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            h1UploadZone.classList.remove('dragover');
+            const studyId = document.getElementById('h1-study-select').value;
+            if (!studyId) {
+                notify('⚠️ Seleccione un estudio primero', 'warning');
+                return;
+            }
+            const files = Array.from(e.dataTransfer.files);
+            handleDICOMFilesH1(files);
+        });
+        
+        h1FileInput.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            handleDICOMFilesH1(files);
+        });
+
+        async function handleDICOMFilesH1(files) {
+            console.log(`📁 Procesando ${files.length} archivo(s) DICOM...`);
+            
+            const studyId = document.getElementById('h1-study-select').value;
+            if (!studyId) {
+                notify('⚠️ Seleccione un estudio primero', 'warning');
+                return;
+            }
+            
+            try {
+                showLoading('Procesando DICOM...');
+                h1ImageIds = [];
+                h1CurrentFile = files[0]; // Guardar referencia
+                
+                for (const file of files) {
+                    const baseImageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
+                    console.log('🆔 Base ImageId:', baseImageId);
+                    
+                    const image = await cornerstone.loadImage(baseImageId);
+                    const numFrames = image.data.intString('x00280008') || 1;
+                    
+                    console.log(`📊 Frames detectados: ${numFrames}`);
+                    
+                    if (numFrames > 1) {
+                        for (let i = 0; i < numFrames; i++) {
+                            const frameImageId = baseImageId + `&frame=${i}`;
+                            h1ImageIds.push(frameImageId);
+                        }
+                        console.log(`✅ Multi-frame procesado: ${numFrames} frames`);
+                    } else {
+                        h1ImageIds.push(baseImageId);
+                        console.log('✅ Single frame procesado');
+                    }
+                    
+                    // Guardar DICOM en IndexedDB
+                    await DB.saveDICOMFile(studyId, file, {
+                        filename: file.name,
+                        numFrames,
+                        baseImageId
+                    });
+                }
+                
+                if (h1ImageIds.length > 0) {
+                    h1CurrentIndex = 0;
+                    h1CurrentStudyId = studyId;
+                    await loadImageH1(h1ImageIds[0]);
+                    updateFrameControlsH1();
+                    
+                    // Habilitar botón de envío
+                    document.getElementById('h1-send-btn').disabled = false;
+                    
+                    notify(`✅ ${h1ImageIds.length} frame(s) cargados`, 'success');
+                    console.log('📋 ImageIds almacenados:', h1ImageIds);
+                }
+                
+                hideLoading();
+            } catch (error) {
+                hideLoading();
+                console.error('❌ Error loading DICOM:', error);
+                notify('Error al cargar DICOM: ' + error.message, 'error');
+            }
+        }
+
+        async function loadImageH1(imageId) {
+            try {
+                // Inicializar elemento si no existe
+                if (!h1Element) {
+                    h1Element = document.getElementById('h1-dicom-element');
+                    const emptyState = h1Element.querySelector('.empty-state');
+                    if (emptyState) emptyState.remove();
+                    cornerstone.enable(h1Element);
+                    
+                    // Activar herramienta por defecto
+                    cornerstoneTools.setToolActive('Wwwc', { mouseButtonMask: 1 });
+                    
+                    // Event listeners
+                    h1Element.addEventListener('cornerstoneimagerendered', updateImageInfoH1);
+                }
+                
+                const image = await cornerstone.loadImage(imageId);
+                cornerstone.displayImage(h1Element, image);
+                
+                // Actualizar información
+                updatePatientInfoH1(image);
+                updateImageInfoH1();
+                
+                // Mostrar controles de cine si hay múltiples frames
+                if (h1ImageIds.length > 1) {
+                    document.getElementById('h1-cine').style.display = 'flex';
+                }
+                
+            } catch (error) {
+                console.error('Error displaying image:', error);
+                notify('Error al mostrar imagen: ' + error.message, 'error');
+            }
+        }
+
+        function updatePatientInfoH1(image) {
+            try {
+                const data = image.data;
+                
+                document.getElementById('h1-patient-name-display').textContent = 
+                    data.string('x00100010') || '-';
+                document.getElementById('h1-patient-id-display').textContent = 
+                    data.string('x00100020') || '-';
+                document.getElementById('h1-patient-age-display').textContent = 
+                    data.string('x00101010') || '-';
+                document.getElementById('h1-patient-gender-display').textContent = 
+                    data.string('x00100040') || '-';
+                    
+                document.getElementById('h1-modality').textContent = 
+                    data.string('x00080060') || '-';
+                document.getElementById('h1-study-date').textContent = 
+                    formatDate(data.string('x00080020')) || '-';
+                document.getElementById('h1-image-size').textContent = 
+                    `${image.width} × ${image.height}`;
+                document.getElementById('h1-num-frames').textContent = 
+                    data.string('x00280008') || '1';
+                    
+            } catch (e) {
+                console.error('Error updating patient info:', e);
+            }
+        }
+
+        function updateImageInfoH1() {
+            try {
+                if (!h1Element) return;
+                
+                const viewport = cornerstone.getViewport(h1Element);
+                if (!viewport) return;
+                
+                document.getElementById('h1-wc-value').textContent = Math.round(viewport.voi.windowCenter);
+                document.getElementById('h1-ww-value').textContent = Math.round(viewport.voi.windowWidth);
+                document.getElementById('h1-zoom-value').textContent = viewport.scale.toFixed(1) + 'x';
+                
+                document.getElementById('h1-window-center').value = viewport.voi.windowCenter;
+                document.getElementById('h1-window-width').value = viewport.voi.windowWidth;
+                document.getElementById('h1-zoom-slider').value = viewport.scale;
+                
+            } catch (e) {
+                console.error('Error updating image info:', e);
+            }
+        }
+
+        function updateFrameControlsH1() {
+            document.getElementById('h1-frame-display').textContent = 
+                `${h1CurrentIndex + 1}/${h1ImageIds.length}`;
+        }
+
+        function setToolH1(toolName) {
+            if (!h1Element) return;
+            
+            cornerstoneTools.setToolPassive('Wwwc');
+            cornerstoneTools.setToolPassive('Zoom');
+            cornerstoneTools.setToolPassive('Pan');
+            cornerstoneTools.setToolPassive('Length');
+            
+            cornerstoneTools.setToolActive(toolName, { mouseButtonMask: 1 });
+        }
+
+        function resetH1() {
+            if (!h1Element) return;
+            cornerstone.reset(h1Element);
+        }
+
+        function updateWindowH1() {
+            if (!h1Element) return;
+            const viewport = cornerstone.getViewport(h1Element);
+            viewport.voi.windowCenter = parseFloat(document.getElementById('h1-window-center').value);
+            viewport.voi.windowWidth = parseFloat(document.getElementById('h1-window-width').value);
+            cornerstone.setViewport(h1Element, viewport);
+            updateImageInfoH1();
+        }
+
+        function updateZoomH1() {
+            if (!h1Element) return;
+            const viewport = cornerstone.getViewport(h1Element);
+            viewport.scale = parseFloat(document.getElementById('h1-zoom-slider').value);
+            cornerstone.setViewport(h1Element, viewport);
+            document.getElementById('h1-zoom-value').textContent = viewport.scale.toFixed(1) + 'x';
+        }
+
+        function updateFPSH1() {
+            h1FPS = parseInt(document.getElementById('h1-fps-select').value);
+            document.getElementById('h1-fps-value').textContent = h1FPS;
+        }
+
+        function playPauseH1() {
+            if (h1PlayInterval) {
+                clearInterval(h1PlayInterval);
+                h1PlayInterval = null;
+                document.getElementById('h1-play-btn').textContent = '▶';
+            } else {
+                h1PlayInterval = setInterval(() => {
+                    h1CurrentIndex = (h1CurrentIndex + 1) % h1ImageIds.length;
+                    loadImageH1(h1ImageIds[h1CurrentIndex]);
+                    updateFrameControlsH1();
+                }, 1000 / h1FPS);
+                document.getElementById('h1-play-btn').textContent = '⏸';
+            }
+        }
+
+        function nextFrameH1() {
+            if (h1ImageIds.length === 0) return;
+            h1CurrentIndex = (h1CurrentIndex + 1) % h1ImageIds.length;
+            loadImageH1(h1ImageIds[h1CurrentIndex]);
+            updateFrameControlsH1();
+        }
+
+        function prevFrameH1() {
+            if (h1ImageIds.length === 0) return;
+            h1CurrentIndex = (h1CurrentIndex - 1 + h1ImageIds.length) % h1ImageIds.length;
+            loadImageH1(h1ImageIds[h1CurrentIndex]);
+            updateFrameControlsH1();
+        }
+
+        function stopH1() {
+            if (h1PlayInterval) {
+                clearInterval(h1PlayInterval);
+                h1PlayInterval = null;
+                document.getElementById('h1-play-btn').textContent = '▶';
+            }
+            h1CurrentIndex = 0;
+            loadImageH1(h1ImageIds[0]);
+            updateFrameControlsH1();
+        }
+
+        async function sendStudyToH2() {
+            if (!h1CurrentStudyId) {
+                notify('⚠️ No hay estudio para enviar', 'warning');
+                return;
+            }
+            
+            try {
+                showLoading('Enviando al Hospital #2...');
+                
+                await DB.updateStudy(h1CurrentStudyId, {
+                    status: 'pending',
+                    hasDICOM: true
+                });
+                
+                notify('✅ Estudio enviado al Hospital #2', 'success');
+                
+                // Reset
+                document.getElementById('h1-study-select').value = '';
+                document.getElementById('h1-send-btn').disabled = true;
+                h1CurrentStudyId = null;
+                
+                await loadH1Studies();
+                hideLoading();
+                
+            } catch (error) {
+                hideLoading();
+                notify('❌ Error: ' + error.message, 'error');
+            }
+        }
+
+        // ==================== HOSPITAL 1 REVIEW FUNCTIONS ====================
+        
+        async function openReviewH1(studyId) {
+            try {
+                showLoading('Cargando estudio completo...');
+                
+                const study = await DB.getStudy(studyId);
+                const patient = await DB.getPatient(study.patientId);
+                
+                // Cambiar vista
+                document.getElementById('h1-main-view').style.display = 'none';
+                document.getElementById('h1-review-view').style.display = 'block';
+                
+                // Actualizar información
+                document.getElementById('h1-review-patient-name').textContent = patient ? patient.name : '-';
+                document.getElementById('h1-review-patient-dni').textContent = patient ? patient.dni : '-';
+                document.getElementById('h1-review-study-id').textContent = study.id;
+                document.getElementById('h1-review-radiologist').textContent = study.radiologist || '-';
+                document.getElementById('h1-review-date').textContent = study.completedAt ? new Date(study.completedAt).toLocaleString('es-CO') : '-';
+                document.getElementById('h1-review-observations').textContent = study.observations || 'Sin observaciones';
+                
+                // Cargar DICOM
+                const dicomData = await DB.getDICOMFile(studyId);
+                
+                if (!dicomData) {
+                    throw new Error('DICOM no encontrado');
+                }
+                
+                // Reconstruct File
+                const blob = new Blob([dicomData.dicomData], { type: 'application/dicom' });
+                const file = new File([blob], dicomData.metadata.filename, { 
+                    type: 'application/dicom' 
+                });
+                
+                // Register in Cornerstone
+                const baseImageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
+                
+                // Load metadata
+                const image = await cornerstone.loadImage(baseImageId);
+                const numFrames = parseInt(image.data.string('x00280008') || '1');
+                
+                // Generate imageIds
+                h1ReviewImageIds = [];
+                for (let i = 0; i < numFrames; i++) {
+                    h1ReviewImageIds.push(`${baseImageId}&frame=${i}`);
+                }
+                
+                console.log(`✅ H1 Review: Loaded ${h1ReviewImageIds.length} frames`);
+                
+                // Initialize viewport
+                h1ReviewElement = document.getElementById('h1-review-element');
+                cornerstone.enable(h1ReviewElement);
+                
+                // Load first frame
+                h1ReviewCurrentIndex = 0;
+                await loadImageH1Review(h1ReviewImageIds[0]);
+                
+                // Setup tools
+                cornerstoneTools.addStackStateManager(h1ReviewElement, ['stack']);
+                cornerstoneTools.addToolState(h1ReviewElement, 'stack', {
+                    imageIds: h1ReviewImageIds,
+                    currentImageIdIndex: 0
+                });
+                
+                // Show cine controls if multi-frame
+                if (h1ReviewImageIds.length > 1) {
+                    document.getElementById('h1-review-cine').style.display = 'flex';
+                    document.getElementById('h1-review-frame-display').textContent = `1/${h1ReviewImageIds.length}`;
+                }
+                
+                hideLoading();
+                notify(`✅ Estudio cargado: ${study.id}`, 'success');
+                
+            } catch (error) {
+                hideLoading();
+                console.error('❌ H1 Review error:', error);
+                notify('❌ Error: ' + error.message, 'error');
+            }
+        }
+
+        async function loadImageH1Review(imageId) {
+            const image = await cornerstone.loadImage(imageId);
+            cornerstone.displayImage(h1ReviewElement, image);
+        }
+
+        function backToMainH1() {
+            document.getElementById('h1-main-view').style.display = 'block';
+            document.getElementById('h1-review-view').style.display = 'none';
+            h1ReviewElement = null;
+            h1ReviewImageIds = [];
+        }
+
+        function setToolH1Review(toolName) {
+            if (!h1ReviewElement) return;
+            
+            cornerstoneTools.setToolPassive('Wwwc');
+            cornerstoneTools.setToolPassive('Zoom');
+            cornerstoneTools.setToolPassive('Pan');
+            cornerstoneTools.setToolPassive('Length');
+            
+            cornerstoneTools.setToolActive(toolName, { mouseButtonMask: 1 });
+        }
+
+        function resetH1Review() {
+            if (!h1ReviewElement) return;
+            cornerstone.reset(h1ReviewElement);
+        }
+
+        function playPauseH1Review() {
+            if (h1ReviewPlayInterval) {
+                clearInterval(h1ReviewPlayInterval);
+                h1ReviewPlayInterval = null;
+                document.getElementById('h1-review-play-btn').textContent = '▶';
+            } else {
+                h1ReviewPlayInterval = setInterval(() => {
+                    h1ReviewCurrentIndex = (h1ReviewCurrentIndex + 1) % h1ReviewImageIds.length;
+                    loadImageH1Review(h1ReviewImageIds[h1ReviewCurrentIndex]);
+                    document.getElementById('h1-review-frame-display').textContent = `${h1ReviewCurrentIndex + 1}/${h1ReviewImageIds.length}`;
+                }, 1000 / 20);
+                document.getElementById('h1-review-play-btn').textContent = '⏸';
+            }
+        }
+
+        function nextFrameH1Review() {
+            if (h1ReviewImageIds.length === 0) return;
+            h1ReviewCurrentIndex = (h1ReviewCurrentIndex + 1) % h1ReviewImageIds.length;
+            loadImageH1Review(h1ReviewImageIds[h1ReviewCurrentIndex]);
+            document.getElementById('h1-review-frame-display').textContent = `${h1ReviewCurrentIndex + 1}/${h1ReviewImageIds.length}`;
+        }
+
+        function prevFrameH1Review() {
+            if (h1ReviewImageIds.length === 0) return;
+            h1ReviewCurrentIndex = (h1ReviewCurrentIndex - 1 + h1ReviewImageIds.length) % h1ReviewImageIds.length;
+            loadImageH1Review(h1ReviewImageIds[h1ReviewCurrentIndex]);
+            document.getElementById('h1-review-frame-display').textContent = `${h1ReviewCurrentIndex + 1}/${h1ReviewImageIds.length}`;
+        }
+
+        function stopH1Review() {
+            if (h1ReviewPlayInterval) {
+                clearInterval(h1ReviewPlayInterval);
+                h1ReviewPlayInterval = null;
+                document.getElementById('h1-review-play-btn').textContent = '▶';
+            }
+            h1ReviewCurrentIndex = 0;
+            loadImageH1Review(h1ReviewImageIds[0]);
+            document.getElementById('h1-review-frame-display').textContent = `1/${h1ReviewImageIds.length}`;
+        }
+
+        // ==================== HOSPITAL 2 FUNCTIONS ====================
+        
+        function loginH2(radiologist) {
+            h2CurrentRadiologist = radiologist;
+            document.getElementById('h2-current-user').textContent = radiologist;
+            document.getElementById('h2-login').style.display = 'none';
+            document.getElementById('h2-worklist').style.display = 'block';
+            loadWorklistH2();
+            notify(`✅ Bienvenido ${radiologist}`, 'success');
+        }
+
+        function logoutH2() {
+            h2CurrentRadiologist = null;
+            document.getElementById('h2-login').style.display = 'block';
+            document.getElementById('h2-worklist').style.display = 'none';
+            document.getElementById('h2-viewer').style.display = 'none';
+        }
+
+        async function loadWorklistH2() {
+            const list = document.getElementById('h2-studies-list');
+            const studies = await DB.getAllStudies();
+            const pendingStudies = studies.filter(s => s.status === 'pending' && s.hasDICOM);
+            
+            // Update counters
+            document.getElementById('ortega-pending').textContent = pendingStudies.length;
+            document.getElementById('martinez-pending').textContent = pendingStudies.length;
+            document.getElementById('rodriguez-pending').textContent = pendingStudies.length;
+            
+            if (pendingStudies.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <p>No hay estudios pendientes</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            list.innerHTML = '';
+            for (const study of pendingStudies) {
+                const patient = await DB.getPatient(study.patientId);
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.onclick = () => openStudyH2(study.id);
+                card.innerHTML = `
+                    <h3>${study.id}</h3>
+                    <p><strong>Paciente:</strong> ${patient ? patient.name : 'N/A'}</p>
+                    <p><strong>DNI:</strong> ${patient ? patient.dni : 'N/A'}</p>
+                    <p><strong>Hospital:</strong> ${study.hospital}</p>
+                    <p><strong>Fecha:</strong> ${study.date}</p>
+                    <span class="status-badge pending">⏳ PENDIENTE</span>
+                    <span class="status-badge has-dicom">📁 DICOM</span>
+                `;
+                list.appendChild(card);
+            }
+        }
+
+        async function openStudyH2(studyId) {
+            try {
+                showLoading('Cargando estudio...');
+                
+                h2CurrentStudy = await DB.getStudy(studyId);
+                const patient = await DB.getPatient(h2CurrentStudy.patientId);
+                
+                // Show viewer
+                document.getElementById('h2-worklist').style.display = 'none';
+                document.getElementById('h2-viewer').style.display = 'block';
+                
+                // Update patient info
+                document.getElementById('h2-patient-name').textContent = patient ? patient.name : '-';
+                document.getElementById('h2-patient-dni').textContent = patient ? patient.dni : '-';
+                document.getElementById('h2-study-id').textContent = h2CurrentStudy.id;
+                document.getElementById('h2-observations').value = h2CurrentStudy.observations || '';
+                
+                // Load DICOM from IndexedDB
+                const dicomData = await DB.getDICOMFile(studyId);
+                
+                if (!dicomData) {
+                    throw new Error('DICOM no encontrado');
+                }
+                
+                // Reconstruct File
+                const blob = new Blob([dicomData.dicomData], { type: 'application/dicom' });
+                const file = new File([blob], dicomData.metadata.filename, { 
+                    type: 'application/dicom' 
+                });
+                
+                // Register in Cornerstone
+                const baseImageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
+                
+                // Load metadata
+                const image = await cornerstone.loadImage(baseImageId);
+                const numFrames = parseInt(image.data.string('x00280008') || '1');
+                
+                // Generate imageIds with CORRECT format
+                h2ImageIds = [];
+                for (let i = 0; i < numFrames; i++) {
+                    h2ImageIds.push(`${baseImageId}&frame=${i}`);
+                }
+                
+                console.log(`✅ H2: Loaded ${h2ImageIds.length} frames`);
+                
+                // Initialize viewport
+                h2Element = document.getElementById('h2-dicom-element');
+                cornerstone.enable(h2Element);
+                
+                // Load first frame
+                h2CurrentIndex = 0;
+                await loadImageH2(h2ImageIds[0]);
+                
+                // Setup tools
+                cornerstoneTools.addStackStateManager(h2Element, ['stack']);
+                cornerstoneTools.addToolState(h2Element, 'stack', {
+                    imageIds: h2ImageIds,
+                    currentImageIdIndex: 0
+                });
+                
+                // Event listener
+                h2Element.addEventListener('cornerstoneimagerendered', updateImageInfoH2);
+                
+                // Show cine controls if multi-frame
+                if (h2ImageIds.length > 1) {
+                    document.getElementById('h2-cine').style.display = 'flex';
+                    document.getElementById('h2-frame-display').textContent = `1/${h2ImageIds.length}`;
+                }
+                
+                hideLoading();
+                notify(`✅ Estudio cargado (${h2ImageIds.length} frames)`, 'success');
+                
+            } catch (error) {
+                hideLoading();
+                console.error('❌ Open study error:', error);
+                notify('❌ Error: ' + error.message, 'error');
+            }
+        }
+
+        async function loadImageH2(imageId) {
+            const image = await cornerstone.loadImage(imageId);
+            cornerstone.displayImage(h2Element, image);
+        }
+
+        function updateImageInfoH2() {
+            try {
+                if (!h2Element) return;
+                
+                const viewport = cornerstone.getViewport(h2Element);
+                if (!viewport) return;
+                
+                document.getElementById('h2-wc-value').textContent = Math.round(viewport.voi.windowCenter);
+                document.getElementById('h2-ww-value').textContent = Math.round(viewport.voi.windowWidth);
+                
+                document.getElementById('h2-window-center').value = viewport.voi.windowCenter;
+                document.getElementById('h2-window-width').value = viewport.voi.windowWidth;
+                
+            } catch (e) {
+                console.error('Error updating H2 image info:', e);
+            }
+        }
+
+        function backToWorklistH2() {
+            document.getElementById('h2-worklist').style.display = 'block';
+            document.getElementById('h2-viewer').style.display = 'none';
+            h2CurrentStudy = null;
+            h2ImageIds = [];
+        }
+
+        function setToolH2(toolName) {
+            if (!h2Element) return;
+            
+            cornerstoneTools.setToolPassive('Wwwc');
+            cornerstoneTools.setToolPassive('Zoom');
+            cornerstoneTools.setToolPassive('Pan');
+            cornerstoneTools.setToolPassive('Length');
+            
+            cornerstoneTools.setToolActive(toolName, { mouseButtonMask: 1 });
+        }
+
+        function resetH2() {
+            if (!h2Element) return;
+            cornerstone.reset(h2Element);
+        }
+
+        function updateWindowH2() {
+            if (!h2Element) return;
+            const viewport = cornerstone.getViewport(h2Element);
+            viewport.voi.windowCenter = parseFloat(document.getElementById('h2-window-center').value);
+            viewport.voi.windowWidth = parseFloat(document.getElementById('h2-window-width').value);
+            cornerstone.setViewport(h2Element, viewport);
+            updateImageInfoH2();
+        }
+
+        function playPauseH2() {
+            if (h2PlayInterval) {
+                clearInterval(h2PlayInterval);
+                h2PlayInterval = null;
+                document.getElementById('h2-play-btn').textContent = '▶';
+            } else {
+                h2PlayInterval = setInterval(() => {
+                    h2CurrentIndex = (h2CurrentIndex + 1) % h2ImageIds.length;
+                    loadImageH2(h2ImageIds[h2CurrentIndex]);
+                    document.getElementById('h2-frame-display').textContent = `${h2CurrentIndex + 1}/${h2ImageIds.length}`;
+                }, 1000 / 20);
+                document.getElementById('h2-play-btn').textContent = '⏸';
+            }
+        }
+
+        function nextFrameH2() {
+            if (h2ImageIds.length === 0) return;
+            h2CurrentIndex = (h2CurrentIndex + 1) % h2ImageIds.length;
+            loadImageH2(h2ImageIds[h2CurrentIndex]);
+            document.getElementById('h2-frame-display').textContent = `${h2CurrentIndex + 1}/${h2ImageIds.length}`;
+        }
+
+        function prevFrameH2() {
+            if (h2ImageIds.length === 0) return;
+            h2CurrentIndex = (h2CurrentIndex - 1 + h2ImageIds.length) % h2ImageIds.length;
+            loadImageH2(h2ImageIds[h2CurrentIndex]);
+            document.getElementById('h2-frame-display').textContent = `${h2CurrentIndex + 1}/${h2ImageIds.length}`;
+        }
+
+        function stopH2() {
+            if (h2PlayInterval) {
+                clearInterval(h2PlayInterval);
+                h2PlayInterval = null;
+                document.getElementById('h2-play-btn').textContent = '▶';
+            }
+            h2CurrentIndex = 0;
+            loadImageH2(h2ImageIds[0]);
+            document.getElementById('h2-frame-display').textContent = `1/${h2ImageIds.length}`;
+        }
+
+        async function saveObservationsH2() {
+            if (!h2CurrentStudy) return;
+            
+            try {
+                const observations = document.getElementById('h2-observations').value;
+                await DB.updateStudy(h2CurrentStudy.id, {
+                    observations,
+                    radiologist: h2CurrentRadiologist
+                });
+                notify('✅ Observaciones guardadas', 'success');
+            } catch (error) {
+                notify('❌ Error: ' + error.message, 'error');
+            }
+        }
+
+        async function completeStudyH2() {
+            if (!h2CurrentStudy) return;
+            
+            const observations = document.getElementById('h2-observations').value;
+            if (!observations.trim()) {
+                notify('⚠️ Agregue observaciones primero', 'warning');
+                return;
+            }
+            
+            if (!confirm('¿Completar estudio y enviar al Hospital #1?')) return;
+            
+            try {
+                showLoading('Completando estudio...');
+                
+                await DB.updateStudy(h2CurrentStudy.id, {
+                    status: 'completed',
+                    observations,
+                    radiologist: h2CurrentRadiologist,
+                    completedAt: new Date().toISOString()
+                });
+                
+                notify('✅ Estudio completado y enviado al Hospital #1', 'success');
+                
+                backToWorklistH2();
+                await loadWorklistH2();
+                hideLoading();
+                
+            } catch (error) {
+                hideLoading();
+                notify('❌ Error: ' + error.message, 'error');
+            }
+        }
+
+        // ==================== ADMIN FUNCTIONS ====================
+        
+        async function loadAdminData() {
+            const studies = await DB.getAllStudies();
+            const patients = await DB.getAllPatients();
+            
+            document.getElementById('admin-total').textContent = studies.length;
+            document.getElementById('admin-pending').textContent = studies.filter(s => s.status === 'pending').length;
+            document.getElementById('admin-completed').textContent = studies.filter(s => s.status === 'completed').length;
+            document.getElementById('admin-patients').textContent = patients.length;
+            
+            const list = document.getElementById('admin-studies-list');
+            list.innerHTML = '';
+            
+            for (const study of studies) {
+                const patient = await DB.getPatient(study.patientId);
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <h3>${study.id}</h3>
+                    <p><strong>Paciente:</strong> ${patient ? patient.name : 'N/A'}</p>
+                    <p><strong>Hospital:</strong> ${study.hospital}</p>
+                    <p><strong>Fecha:</strong> ${study.date}</p>
+                    <p><strong>Radiólogo:</strong> ${study.radiologist || 'Pendiente'}</p>
+                    <span class="status-badge ${study.status}">${study.status.toUpperCase()}</span>
+                `;
+                list.appendChild(card);
+            }
+        }
+
+        // ==================== TAB SWITCHING ====================
+        
+        async function switchTab(tabName) {
+            document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            
+            document.getElementById('tab-' + tabName).classList.add('active');
+            event.target.classList.add('active');
+            
+            if (tabName === 'hospital1') {
+                await loadH1Studies();
+            } else if (tabName === 'admin') {
+                await loadAdminData();
+            }
+        }
+
+        // ==================== UTILITIES ====================
+        
+        function formatDate(dateStr) {
+            if (!dateStr || dateStr.length !== 8) return dateStr;
+            return `${dateStr.slice(6,8)}/${dateStr.slice(4,6)}/${dateStr.slice(0,4)}`;
+        }
+        
+        function showLoading(text) {
+            document.getElementById('loading-text').textContent = text;
+            document.getElementById('loading-overlay').style.display = 'flex';
+        }
+        
+        function hideLoading() {
+            document.getElementById('loading-overlay').style.display = 'none';
+        }
+        
+        function notify(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+    </script>
+</body>
+</html>

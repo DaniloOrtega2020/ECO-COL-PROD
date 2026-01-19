@@ -1,0 +1,748 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>ECO-COL - Sistema de Tele-Radiología</title>
+    <script src="https://unpkg.com/dicom-parser@1.8.11/dist/dicomParser.min.js"></script>
+    <style>
+        :root{--primary:#00695c;--accent:#00bfa5;--bg:#121212;--panel:#1e1e1e;--border:#333;--warning:#ff9800;--danger:#f44336}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:#fff;height:100vh;overflow:hidden}
+        
+        /* LOGIN */
+        .login-screen{position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#004d40,#00695c);display:flex;align-items:center;justify-content:center;z-index:10000}
+        .login-box{background:rgba(255,255,255,0.98);color:#333;padding:2.5rem;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,0.4);max-width:900px;width:95%}
+        .login-title{color:#00695c;text-align:center;font-size:2rem;margin-bottom:0.5rem}
+        .login-subtitle{text-align:center;color:#666;margin-bottom:2rem}
+        .radiologists-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:1.5rem;margin-top:2rem}
+        .radiologist-card{background:#f8f9fa;padding:1.5rem;border-radius:12px;cursor:pointer;border:3px solid transparent;transition:all 0.3s;text-align:center}
+        .radiologist-card:hover{background:#e8f5e9;border-color:#00bfa5;transform:translateY(-5px);box-shadow:0 8px 24px rgba(0,191,165,0.3)}
+        .radiologist-card.selected{background:#c8e6c9;border-color:#00695c}
+        .radiologist-avatar{font-size:4rem;margin-bottom:1rem}
+        .radiologist-name{color:#00695c;font-size:1.3rem;font-weight:700;margin-bottom:0.5rem}
+        .radiologist-info{color:#666;font-size:0.9rem;margin:0.3rem 0}
+        .radiologist-badge{display:inline-block;background:#00bfa5;color:#fff;padding:0.3rem 0.8rem;border-radius:15px;font-size:0.75rem;font-weight:700;margin-top:0.5rem}
+        .login-btn{width:100%;padding:1.2rem;background:#00695c;color:#fff;border:none;border-radius:8px;font-size:1.2rem;font-weight:700;cursor:pointer;margin-top:2rem;transition:all 0.3s;text-transform:uppercase}
+        .login-btn:hover:not(:disabled){background:#00bfa5;transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,191,165,0.4)}
+        .login-btn:disabled{background:#ccc;cursor:not-allowed}
+        
+        /* APP */
+        .app{display:none}
+        .header{background:linear-gradient(135deg,#004d40,var(--primary));padding:1rem 2rem;display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid var(--accent);box-shadow:0 4px 12px rgba(0,0,0,0.3)}
+        .header-left{display:flex;align-items:center;gap:1.5rem}
+        .header h1{font-size:1.5rem;display:flex;align-items:center;gap:0.5rem}
+        .badge{background:var(--accent);color:#000;padding:0.3rem 0.8rem;border-radius:20px;font-size:0.75rem;font-weight:700}
+        .badge.pending{background:var(--warning);animation:pulse 2s infinite}
+        .user-info{display:flex;align-items:center;gap:1rem;background:rgba(0,0,0,0.3);padding:0.6rem 1.2rem;border-radius:25px}
+        .logout-btn{background:#f44336;color:#fff;border:none;padding:0.6rem 1.2rem;border-radius:6px;cursor:pointer;font-weight:600;transition:all 0.3s}
+        .logout-btn:hover{background:#d32f2f;transform:translateY(-2px)}
+        
+        /* LAYOUT */
+        .main{display:grid;grid-template-columns:380px 1fr 400px;height:calc(100vh - 73px)}
+        .panel{background:var(--panel);overflow-y:auto}
+        .panel-header{padding:1.2rem;background:#252525;border-bottom:2px solid var(--primary);position:sticky;top:0;z-index:10}
+        .panel-title{font-size:1rem;color:var(--accent);margin-bottom:0.8rem;text-transform:uppercase;letter-spacing:0.5px;display:flex;align-items:center;gap:0.5rem}
+        
+        /* WORKLIST */
+        .worklist{border-right:1px solid var(--border)}
+        .filter-tabs{display:flex;gap:0.5rem;margin-top:0.8rem}
+        .filter-tab{flex:1;padding:0.6rem;background:#2a2a2a;border:none;color:#fff;border-radius:6px;cursor:pointer;font-size:0.8rem;transition:all 0.3s}
+        .filter-tab.active{background:var(--primary)}
+        .study-list{padding:0.5rem}
+        .study-item{background:#252525;border:1px solid var(--border);border-radius:8px;padding:1rem;margin:0.5rem;cursor:pointer;transition:all 0.3s;position:relative}
+        .study-item:hover{background:linear-gradient(135deg,#1a4a44,#256d63);border-color:var(--accent);transform:translateX(5px)}
+        .study-item.active{background:linear-gradient(135deg,#1a4a44,#256d63);border-color:var(--accent)}
+        .study-item.pending::before{content:'';position:absolute;top:10px;right:10px;width:12px;height:12px;background:var(--warning);border-radius:50%;animation:pulse 2s infinite}
+        .study-item.completed::before{content:'✓';position:absolute;top:8px;right:8px;width:20px;height:20px;background:#4caf50;border-radius:50%;color:#fff;font-size:12px;display:flex;align-items:center;justify-content:center}
+        .study-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:0.5rem}
+        .study-id{color:var(--accent);font-weight:700;font-size:0.95rem}
+        .study-status{padding:0.2rem 0.6rem;border-radius:12px;font-size:0.7rem;font-weight:700;text-transform:uppercase}
+        .study-status.pending{background:var(--warning);color:#000}
+        .study-status.completed{background:#4caf50;color:#fff}
+        .study-details{font-size:0.85rem;color:#b0b0b0;line-height:1.6}
+        .study-details strong{color:#fff}
+        
+        /* VIEWER */
+        .viewer-panel{background:#000;display:flex;flex-direction:column}
+        .toolbar{background:#1a1a1a;padding:0.8rem;display:flex;gap:0.5rem;border-bottom:1px solid var(--border);flex-wrap:wrap}
+        .btn{background:#2a2a2a;border:1px solid var(--border);color:#fff;padding:0.6rem 1rem;border-radius:6px;cursor:pointer;font-size:0.85rem;transition:all 0.3s}
+        .btn:hover,.btn.active{background:var(--primary)}
+        .viewer-area{flex:1;display:flex;align-items:center;justify-content:center;position:relative}
+        #canvas{max-width:100%;max-height:100%;border:2px solid var(--accent);box-shadow:0 8px 32px rgba(0,191,165,0.3);image-rendering:pixelated}
+        .overlay{position:absolute;top:15px;left:15px;background:rgba(0,0,0,0.9);padding:1rem;border-radius:8px;border:1px solid var(--accent);font-family:monospace;font-size:0.8rem;line-height:1.8;pointer-events:none}
+        .overlay-label{color:var(--accent);font-weight:700;margin-right:0.5rem}
+        .cine-controls{position:absolute;bottom:20px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.95);padding:1rem 2rem;border-radius:50px;display:flex;gap:1.5rem;border:2px solid var(--accent)}
+        .cine-btn{background:var(--primary);border:none;color:#fff;width:45px;height:45px;border-radius:50%;cursor:pointer;font-size:1.1rem;transition:all 0.3s}
+        .cine-btn:hover{background:var(--accent);transform:scale(1.1)}
+        .frame-info{color:var(--accent);font-weight:700;font-size:0.9rem;min-width:100px;text-align:center}
+        .empty-viewer{text-align:center;color:#666;padding:4rem 2rem}
+        .empty-viewer-icon{font-size:5rem;margin-bottom:1rem}
+        
+        /* OBSERVATIONS PANEL */
+        .observations-panel{border-left:1px solid var(--border);padding:1.5rem}
+        .obs-section{margin-bottom:2rem}
+        .obs-section h3{font-size:0.9rem;color:var(--accent);margin-bottom:1rem;padding-bottom:0.5rem;border-bottom:2px solid var(--primary);text-transform:uppercase}
+        textarea{width:100%;min-height:200px;background:#252525;border:1px solid var(--border);color:#fff;padding:1rem;border-radius:8px;font-family:inherit;font-size:0.9rem;resize:vertical}
+        textarea:focus{outline:none;border-color:var(--accent)}
+        .action-btn{width:100%;padding:0.9rem;border:none;border-radius:8px;cursor:pointer;font-weight:700;font-size:0.9rem;transition:all 0.3s;text-transform:uppercase;margin-top:0.5rem}
+        .btn-primary{background:var(--primary);color:#fff}
+        .btn-primary:hover{background:var(--accent);transform:translateY(-2px);box-shadow:0 6px 20px rgba(0,191,165,0.3)}
+        .btn-success{background:#4caf50;color:#fff}
+        .btn-success:hover{background:#45a049;transform:translateY(-2px)}
+        .patient-info{background:#252525;padding:1rem;border-radius:8px;margin-bottom:1rem}
+        .patient-info div{margin:0.4rem 0;font-size:0.85rem}
+        .patient-info strong{color:var(--accent)}
+        
+        /* UTILS */
+        .pulse{animation:pulse 2s infinite}
+        @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.7;transform:scale(1.05)}}
+        .notification{position:fixed;top:90px;right:20px;padding:1rem 1.5rem;border-radius:8px;font-weight:600;z-index:9999;animation:slideIn 0.3s;box-shadow:0 8px 24px rgba(0,0,0,0.4);max-width:400px}
+        .notification.success{background:#4caf50;border:2px solid #66bb6a}
+        .notification.warning{background:#ff9800;border:2px solid #ffb74d;color:#000}
+        .notification.error{background:#f44336;border:2px solid #ef5350}
+        @keyframes slideIn{from{transform:translateX(450px);opacity:0}to{transform:translateX(0);opacity:1}}
+        .spinner{border:4px solid var(--border);border-top-color:var(--accent);border-radius:50%;width:50px;height:50px;animation:spin 1s linear infinite;margin:2rem auto}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        .control-group{margin-bottom:1.5rem}
+        .control-label{display:flex;justify-content:space-between;margin-bottom:0.5rem;font-size:0.85rem}
+        .control-value{color:var(--accent);font-weight:700}
+        input[type="range"]{width:100%;height:6px;background:var(--border);-webkit-appearance:none;border-radius:3px}
+        input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:18px;height:18px;border-radius:50%;background:var(--accent);cursor:pointer}
+        input[type="file"]{display:none}
+    </style>
+</head>
+<body>
+    <!-- LOGIN SCREEN -->
+    <div class="login-screen" id="login-screen">
+        <div class="login-box">
+            <h1 class="login-title">🏥 ECO-COL - Tele-Radiología</h1>
+            <p class="login-subtitle">Sistema de Lectura de Ecografías - Hospital Especializado #2</p>
+            <p style="text-align:center;color:#666;margin-bottom:1rem">Selecciona tu perfil de radiólogo para acceder a la lista de trabajo</p>
+            
+            <div class="radiologists-grid">
+                <div class="radiologist-card" onclick="selectRadiologist('ortega')">
+                    <div class="radiologist-avatar">👨‍⚕️</div>
+                    <div class="radiologist-name">Dr. Danilo Ortega</div>
+                    <div class="radiologist-info"><strong>Especialidad:</strong> Radiología Abdominal</div>
+                    <div class="radiologist-info"><strong>Estudios pendientes:</strong> <span id="pending-ortega">0</span></div>
+                    <span class="radiologist-badge">RADIÓLOGO 1</span>
+                </div>
+                
+                <div class="radiologist-card" onclick="selectRadiologist('martinez')">
+                    <div class="radiologist-avatar">👩‍⚕️</div>
+                    <div class="radiologist-name">Dra. María Martínez</div>
+                    <div class="radiologist-info"><strong>Especialidad:</strong> Ecografía Obstétrica</div>
+                    <div class="radiologist-info"><strong>Estudios pendientes:</strong> <span id="pending-martinez">0</span></div>
+                    <span class="radiologist-badge">RADIÓLOGO 2</span>
+                </div>
+                
+                <div class="radiologist-card" onclick="selectRadiologist('rodriguez')">
+                    <div class="radiologist-avatar">👨‍⚕️</div>
+                    <div class="radiologist-name">Dr. Carlos Rodríguez</div>
+                    <div class="radiologist-info"><strong>Especialidad:</strong> Ecografía Cardíaca</div>
+                    <div class="radiologist-info"><strong>Estudios pendientes:</strong> <span id="pending-rodriguez">0</span></div>
+                    <span class="radiologist-badge">RADIÓLOGO 3</span>
+                </div>
+            </div>
+            
+            <button class="login-btn" id="login-btn" disabled onclick="login()">INGRESAR A LISTA DE TRABAJO</button>
+        </div>
+    </div>
+
+    <!-- APP -->
+    <div class="app" id="app">
+        <div class="header">
+            <div class="header-left">
+                <h1>🏥 ECO-COL <span class="badge" id="role-badge">HOSPITAL 2</span></h1>
+                <span class="badge pending" id="pending-badge">0 PENDIENTES</span>
+            </div>
+            <div style="display:flex;gap:1.5rem;align-items:center">
+                <div class="user-info">
+                    <span id="user-name">Radiólogo</span>
+                </div>
+                <button class="logout-btn" onclick="logout()">🚪 Salir</button>
+            </div>
+        </div>
+        
+        <div class="main">
+            <!-- WORKLIST -->
+            <div class="panel worklist">
+                <div class="panel-header">
+                    <h2 class="panel-title">📋 LISTA DE TRABAJO</h2>
+                    <div class="filter-tabs">
+                        <button class="filter-tab active" onclick="filterStudies('all')">Todos</button>
+                        <button class="filter-tab" onclick="filterStudies('pending')">Pendientes</button>
+                        <button class="filter-tab" onclick="filterStudies('completed')">Completados</button>
+                    </div>
+                </div>
+                <div class="study-list" id="study-list">
+                    <div class="empty-viewer">
+                        <div class="empty-viewer-icon">📋</div>
+                        <div>No hay estudios en la lista de trabajo</div>
+                        <div style="font-size:0.85rem;margin-top:0.5rem;opacity:0.7">Los estudios del Hospital #1 aparecerán aquí</div>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- VIEWER -->
+            <div class="panel viewer-panel">
+                <div class="toolbar">
+                    <button class="btn active">🔍 Pan</button>
+                    <button class="btn" onclick="invertColors()">🔄 Invertir</button>
+                    <button class="btn" onclick="resetView()">↻ Reset</button>
+                    <button class="btn" onclick="autoAdjust()">✨ Auto</button>
+                    <button class="btn" onclick="uploadDICOM()">📤 Cargar DICOM</button>
+                </div>
+                <div class="viewer-area">
+                    <div class="empty-viewer" id="empty-viewer">
+                        <div class="empty-viewer-icon">🖼️</div>
+                        <div>Selecciona un estudio para visualizar</div>
+                        <div style="font-size:0.85rem;margin-top:0.5rem;opacity:0.7">El visor DICOM aparecerá aquí</div>
+                    </div>
+                    <canvas id="canvas" width="512" height="512" style="display:none"></canvas>
+                    <div class="overlay" id="overlay" style="display:none">
+                        <div><span class="overlay-label">PACIENTE:</span><span id="pat-name">--</span></div>
+                        <div><span class="overlay-label">ID:</span><span id="pat-id">--</span></div>
+                        <div><span class="overlay-label">FECHA:</span><span id="study-date">--</span></div>
+                        <div><span class="overlay-label">MODALIDAD:</span><span id="modality">--</span></div>
+                        <div><span class="overlay-label">DIMENSIONES:</span><span id="dimensions">--</span></div>
+                    </div>
+                    <div class="cine-controls" id="cine-controls" style="display:none">
+                        <button class="cine-btn" onclick="playPause()">▶️</button>
+                        <button class="cine-btn" onclick="prevFrame()">⏮</button>
+                        <span class="frame-info" id="frame-info">1/1</span>
+                        <button class="cine-btn" onclick="nextFrame()">⏭</button>
+                        <button class="cine-btn" onclick="stopCine()">⏹</button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- OBSERVATIONS -->
+            <div class="panel observations-panel">
+                <div class="panel-header" style="position:static">
+                    <h2 class="panel-title">📝 OBSERVACIONES</h2>
+                </div>
+                
+                <div id="no-study-selected" class="empty-viewer" style="padding:2rem 1rem">
+                    <div style="font-size:2rem;margin-bottom:1rem">📝</div>
+                    <div style="font-size:0.9rem">Selecciona un estudio para agregar observaciones</div>
+                </div>
+                
+                <div id="observation-panel" style="display:none">
+                    <div class="obs-section">
+                        <h3>👤 Datos del Paciente</h3>
+                        <div class="patient-info" id="patient-info"></div>
+                    </div>
+                    
+                    <div class="obs-section">
+                        <h3>🎚️ Controles de Imagen</h3>
+                        <div class="control-group">
+                            <div class="control-label">
+                                <span>Centro</span>
+                                <span class="control-value" id="center-val">128</span>
+                            </div>
+                            <input type="range" id="center-slider" min="0" max="255" value="128" oninput="updateWindow()">
+                        </div>
+                        <div class="control-group">
+                            <div class="control-label">
+                                <span>Ancho</span>
+                                <span class="control-value" id="width-val">255</span>
+                            </div>
+                            <input type="range" id="width-slider" min="1" max="255" value="255" oninput="updateWindow()">
+                        </div>
+                    </div>
+                    
+                    <div class="obs-section">
+                        <h3>📋 Hallazgos Radiológicos</h3>
+                        <textarea id="observations-text" placeholder="Describa los hallazgos encontrados en el estudio ecográfico...
+
+Ejemplo:
+- Hígado de tamaño normal
+- Vesícula biliar sin alteraciones
+- No se observan masas ni lesiones focales
+- Conclusión: Estudio dentro de límites normales"></textarea>
+                    </div>
+                    
+                    <button class="action-btn btn-primary" onclick="saveObservations()">💾 GUARDAR OBSERVACIONES</button>
+                    <button class="action-btn btn-success" onclick="completeStudy()">✅ COMPLETAR Y ENVIAR AL HOSPITAL #1</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <input type="file" id="file-input" accept=".dcm,.dicom" multiple>
+    
+    <script>
+// ==================== SISTEMA DE DATOS ====================
+const DB = {
+    studies: [],
+    currentRadiologist: null,
+    currentStudy: null,
+    
+    init() {
+        const stored = localStorage.getItem('ecocol_studies');
+        if (stored) {
+            this.studies = JSON.parse(stored);
+        } else {
+            // Crear estudios demo del Hospital #1
+            this.createDemoStudies();
+        }
+        this.save();
+    },
+    
+    createDemoStudies() {
+        const demoStudies = [
+            {
+                id: 'ECO-001',
+                patientName: 'García Pérez, Ana María',
+                patientId: 'PAC-12345',
+                date: '2026-01-17',
+                modality: 'US',
+                hospital: 'Hospital Regional Norte',
+                status: 'pending',
+                observations: '',
+                radiologist: null,
+                createdAt: new Date().toISOString()
+            },
+            {
+                id: 'ECO-002',
+                patientName: 'Rodríguez López, Carlos',
+                patientId: 'PAC-12346',
+                date: '2026-01-17',
+                modality: 'US',
+                hospital: 'Hospital Regional Norte',
+                status: 'pending',
+                observations: '',
+                radiologist: null,
+                createdAt: new Date().toISOString()
+            },
+            {
+                id: 'ECO-003',
+                patientName: 'Martínez Silva, Laura',
+                patientId: 'PAC-12347',
+                date: '2026-01-16',
+                modality: 'US',
+                hospital: 'Hospital Regional Norte',
+                status: 'pending',
+                observations: '',
+                radiologist: null,
+                createdAt: new Date().toISOString()
+            }
+        ];
+        this.studies = demoStudies;
+    },
+    
+    save() {
+        localStorage.setItem('ecocol_studies', JSON.stringify(this.studies));
+    },
+    
+    getStudy(id) {
+        return this.studies.find(s => s.id === id);
+    },
+    
+    updateStudy(id, data) {
+        const study = this.getStudy(id);
+        if (study) {
+            Object.assign(study, data);
+            this.save();
+        }
+    },
+    
+    getPendingCount() {
+        return this.studies.filter(s => s.status === 'pending').length;
+    }
+};
+
+// ==================== RADIOLOGISTS ====================
+const RADIOLOGISTS = {
+    'ortega': {
+        id: 'ortega',
+        name: 'Dr. Danilo Ortega',
+        specialty: 'Radiología Abdominal'
+    },
+    'martinez': {
+        id: 'martinez',
+        name: 'Dra. María Martínez',
+        specialty: 'Ecografía Obstétrica'
+    },
+    'rodriguez': {
+        id: 'rodriguez',
+        name: 'Dr. Carlos Rodríguez',
+        specialty: 'Ecografía Cardíaca'
+    }
+};
+
+// ==================== DICOM VIEWER ====================
+let canvas, ctx, allFrames = [], currentFrame = 0, totalFrames = 1;
+let playing = false, playInterval = null, fps = 10;
+let inverted = false;
+
+// ==================== INICIALIZACIÓN ====================
+window.addEventListener('DOMContentLoaded', () => {
+    DB.init();
+    canvas = document.getElementById('canvas');
+    ctx = canvas.getContext('2d');
+    
+    // Setup file input
+    document.getElementById('file-input').addEventListener('change', handleFileSelect);
+    
+    // Update pending counts
+    updatePendingCounts();
+    
+    console.log('✅ ECO-COL Sistema Iniciado');
+    console.log('📊 Estudios en base de datos:', DB.studies.length);
+});
+
+// ==================== LOGIN SYSTEM ====================
+let selectedRadiologistId = null;
+
+function selectRadiologist(id) {
+    selectedRadiologistId = id;
+    document.querySelectorAll('.radiologist-card').forEach(c => c.classList.remove('selected'));
+    event.target.closest('.radiologist-card').classList.add('selected');
+    document.getElementById('login-btn').disabled = false;
+}
+
+function login() {
+    if (!selectedRadiologistId) return;
+    
+    DB.currentRadiologist = RADIOLOGISTS[selectedRadiologistId];
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('user-name').textContent = DB.currentRadiologist.name;
+    
+    loadWorklist();
+    notify(`Bienvenido ${DB.currentRadiologist.name}`, 'success');
+}
+
+function logout() {
+    if (confirm('¿Seguro que deseas cerrar sesión?')) {
+        location.reload();
+    }
+}
+
+// ==================== WORKLIST ====================
+function loadWorklist() {
+    const container = document.getElementById('study-list');
+    container.innerHTML = '';
+    
+    if (DB.studies.length === 0) {
+        container.innerHTML = '<div class="empty-viewer" style="padding:2rem"><div style="font-size:3rem;margin-bottom:1rem">📋</div><div>No hay estudios en la lista de trabajo</div></div>';
+        return;
+    }
+    
+    DB.studies.forEach(study => {
+        const item = document.createElement('div');
+        item.className = `study-item ${study.status}`;
+        item.onclick = () => selectStudy(study.id);
+        
+        item.innerHTML = `
+            <div class="study-header">
+                <span class="study-id">${study.id}</span>
+                <span class="study-status ${study.status}">${study.status === 'pending' ? 'PENDIENTE' : 'COMPLETADO'}</span>
+            </div>
+            <div class="study-details">
+                <div><strong>Paciente:</strong> ${study.patientName}</div>
+                <div><strong>ID:</strong> ${study.patientId}</div>
+                <div><strong>Fecha:</strong> ${study.date}</div>
+                <div><strong>Hospital:</strong> ${study.hospital}</div>
+                ${study.radiologist ? `<div><strong>Radiólogo:</strong> ${study.radiologist}</div>` : ''}
+            </div>
+        `;
+        
+        container.appendChild(item);
+    });
+    
+    updatePendingBadge();
+}
+
+function filterStudies(filter) {
+    document.querySelectorAll('.filter-tab').forEach(t => t.classList.remove('active'));
+    event.target.classList.add('active');
+    
+    document.querySelectorAll('.study-item').forEach(item => {
+        if (filter === 'all') {
+            item.style.display = 'block';
+        } else if (filter === 'pending') {
+            item.style.display = item.classList.contains('pending') ? 'block' : 'none';
+        } else if (filter === 'completed') {
+            item.style.display = item.classList.contains('completed') ? 'block' : 'none';
+        }
+    });
+}
+
+function selectStudy(studyId) {
+    DB.currentStudy = DB.getStudy(studyId);
+    
+    document.querySelectorAll('.study-item').forEach(i => i.classList.remove('active'));
+    event.target.closest('.study-item').classList.add('active');
+    
+    showObservationPanel();
+    updatePatientInfo();
+    
+    // Clear viewer for now (will load DICOM if available)
+    document.getElementById('empty-viewer').style.display = 'flex';
+    document.getElementById('canvas').style.display = 'none';
+    document.getElementById('overlay').style.display = 'none';
+    document.getElementById('cine-controls').style.display = 'none';
+    
+    // Load observations if exist
+    document.getElementById('observations-text').value = DB.currentStudy.observations || '';
+}
+
+function showObservationPanel() {
+    document.getElementById('no-study-selected').style.display = 'none';
+    document.getElementById('observation-panel').style.display = 'block';
+}
+
+function updatePatientInfo() {
+    const info = document.getElementById('patient-info');
+    info.innerHTML = `
+        <div><strong>Nombre:</strong> ${DB.currentStudy.patientName}</div>
+        <div><strong>ID:</strong> ${DB.currentStudy.patientId}</div>
+        <div><strong>Fecha:</strong> ${DB.currentStudy.date}</div>
+        <div><strong>Modalidad:</strong> ${DB.currentStudy.modality}</div>
+        <div><strong>Hospital Origen:</strong> ${DB.currentStudy.hospital}</div>
+        <div><strong>Estado:</strong> ${DB.currentStudy.status === 'pending' ? '⚠️ Pendiente' : '✅ Completado'}</div>
+    `;
+}
+
+function updatePendingCounts() {
+    const count = DB.getPendingCount();
+    document.querySelectorAll('[id^="pending-"]').forEach(el => {
+        el.textContent = count;
+    });
+}
+
+function updatePendingBadge() {
+    const count = DB.getPendingCount();
+    document.getElementById('pending-badge').textContent = `${count} PENDIENTES`;
+}
+
+// ==================== OBSERVATIONS ====================
+function saveObservations() {
+    if (!DB.currentStudy) return;
+    
+    const observations = document.getElementById('observations-text').value;
+    DB.updateStudy(DB.currentStudy.id, {
+        observations: observations,
+        radiologist: DB.currentRadiologist.name
+    });
+    
+    notify('Observaciones guardadas correctamente', 'success');
+}
+
+function completeStudy() {
+    if (!DB.currentStudy) return;
+    
+    const observations = document.getElementById('observations-text').value;
+    if (!observations.trim()) {
+        notify('Por favor, agregue observaciones antes de completar el estudio', 'warning');
+        return;
+    }
+    
+    if (!confirm('¿Confirma que desea completar este estudio y enviarlo al Hospital #1?')) {
+        return;
+    }
+    
+    DB.updateStudy(DB.currentStudy.id, {
+        status: 'completed',
+        observations: observations,
+        radiologist: DB.currentRadiologist.name,
+        completedAt: new Date().toISOString()
+    });
+    
+    // Simulate notification to Hospital #1
+    notify(`✅ Estudio ${DB.currentStudy.id} completado y enviado al Hospital #1`, 'success');
+    
+    // Reload worklist
+    loadWorklist();
+    updatePendingBadge();
+    
+    // Clear observation panel
+    document.getElementById('observations-text').value = '';
+    document.getElementById('no-study-selected').style.display = 'flex';
+    document.getElementById('observation-panel').style.display = 'none';
+}
+
+// ==================== DICOM UPLOAD ====================
+function uploadDICOM() {
+    document.getElementById('file-input').click();
+}
+
+function handleFileSelect(event) {
+    const files = Array.from(event.target.files);
+    files.forEach(file => {
+        if (file.name.match(/\.(dcm|dicom)$/i)) {
+            loadDICOM(file);
+        }
+    });
+    event.target.value = '';
+}
+
+async function loadDICOM(file) {
+    const buffer = await file.arrayBuffer();
+    try {
+        const dataSet = dicomParser.parseDicom(new Uint8Array(buffer));
+        
+        const rows = dataSet.uint16('x00280010');
+        const cols = dataSet.uint16('x00280011');
+        const bitsAllocated = dataSet.uint16('x00280100') || 8;
+        const pixelDataElement = dataSet.elements.x7fe00010;
+        
+        if (!pixelDataElement) throw new Error('No pixel data');
+        
+        const pixelData = new Uint8Array(dataSet.byteArray.buffer, pixelDataElement.dataOffset, pixelDataElement.length);
+        
+        canvas.width = cols;
+        canvas.height = rows;
+        
+        const imgData = ctx.createImageData(cols, rows);
+        const data = imgData.data;
+        
+        if (bitsAllocated === 8) {
+            for (let i = 0; i < rows * cols; i++) {
+                const val = pixelData[i];
+                data[i * 4] = data[i * 4 + 1] = data[i * 4 + 2] = val;
+                data[i * 4 + 3] = 255;
+            }
+        } else if (bitsAllocated === 16) {
+            for (let i = 0; i < rows * cols; i++) {
+                const val16 = (pixelData[i * 2 + 1] << 8) | pixelData[i * 2];
+                const val8 = Math.floor((val16 / 65535) * 255);
+                data[i * 4] = data[i * 4 + 1] = data[i * 4 + 2] = val8;
+                data[i * 4 + 3] = 255;
+            }
+        }
+        
+        allFrames = [imgData];
+        currentFrame = 0;
+        totalFrames = 1;
+        
+        ctx.putImageData(allFrames[0], 0, 0);
+        
+        document.getElementById('empty-viewer').style.display = 'none';
+        document.getElementById('canvas').style.display = 'block';
+        document.getElementById('overlay').style.display = 'block';
+        
+        updateOverlay(dataSet);
+        autoAdjust();
+        
+        notify(`DICOM cargado: ${file.name}`, 'success');
+    } catch (error) {
+        notify(`Error al cargar DICOM: ${error.message}`, 'error');
+    }
+}
+
+function updateOverlay(dataSet) {
+    document.getElementById('pat-name').textContent = dataSet.string('x00100010') || DB.currentStudy?.patientName || '--';
+    document.getElementById('pat-id').textContent = dataSet.string('x00100020') || DB.currentStudy?.patientId || '--';
+    document.getElementById('study-date').textContent = dataSet.string('x00080020') || DB.currentStudy?.date || '--';
+    document.getElementById('modality').textContent = dataSet.string('x00080060') || 'US';
+    document.getElementById('dimensions').textContent = `${canvas.width}x${canvas.height}`;
+}
+
+// ==================== IMAGE CONTROLS ====================
+function updateWindow() {
+    const center = parseInt(document.getElementById('center-slider').value);
+    const width = parseInt(document.getElementById('width-slider').value);
+    
+    document.getElementById('center-val').textContent = center;
+    document.getElementById('width-val').textContent = width;
+    
+    if (!allFrames.length) return;
+    
+    const imgData = allFrames[currentFrame];
+    const tempData = ctx.createImageData(canvas.width, canvas.height);
+    const src = imgData.data, dst = tempData.data;
+    const min = center - width / 2, max = center + width / 2;
+    
+    for (let i = 0; i < src.length; i += 4) {
+        let val = src[i];
+        if (inverted) val = 255 - val;
+        let newVal = val <= min ? 0 : val >= max ? 255 : ((val - min) / (max - min)) * 255;
+        dst[i] = dst[i + 1] = dst[i + 2] = newVal;
+        dst[i + 3] = 255;
+    }
+    
+    ctx.putImageData(tempData, 0, 0);
+}
+
+function invertColors() {
+    inverted = !inverted;
+    updateWindow();
+}
+
+function resetView() {
+    document.getElementById('center-slider').value = 128;
+    document.getElementById('width-slider').value = 255;
+    inverted = false;
+    updateWindow();
+}
+
+function autoAdjust() {
+    if (!allFrames.length) return;
+    const data = allFrames[currentFrame].data;
+    let min = 255, max = 0;
+    for (let i = 0; i < data.length; i += 4) {
+        const val = data[i];
+        if (val < min) min = val;
+        if (val > max) max = val;
+    }
+    const center = Math.floor((min + max) / 2);
+    const width = Math.floor((max - min) * 1.2);
+    document.getElementById('center-slider').value = center;
+    document.getElementById('width-slider').value = width;
+    updateWindow();
+}
+
+// ==================== CINE CONTROLS ====================
+function playPause() {
+    if (totalFrames <= 1) return;
+    playing = !playing;
+    if (playing) {
+        playInterval = setInterval(() => {
+            currentFrame = (currentFrame + 1) % totalFrames;
+            updateWindow();
+        }, 1000 / fps);
+    } else {
+        clearInterval(playInterval);
+    }
+}
+
+function nextFrame() {
+    if (allFrames.length) {
+        currentFrame = (currentFrame + 1) % totalFrames;
+        updateWindow();
+    }
+}
+
+function prevFrame() {
+    if (allFrames.length) {
+        currentFrame = (currentFrame - 1 + totalFrames) % totalFrames;
+        updateWindow();
+    }
+}
+
+function stopCine() {
+    playing = false;
+    clearInterval(playInterval);
+    currentFrame = 0;
+    updateWindow();
+}
+
+// ==================== NOTIFICATIONS ====================
+function notify(message, type = 'info') {
+    const notification = document.createElement('div');
+    notification.className = `notification ${type}`;
+    notification.textContent = message;
+    document.body.appendChild(notification);
+    
+    setTimeout(() => {
+        notification.style.opacity = '0';
+        setTimeout(() => notification.remove(), 300);
+    }, 4000);
+}
+    </script>
+</body>
+</html>

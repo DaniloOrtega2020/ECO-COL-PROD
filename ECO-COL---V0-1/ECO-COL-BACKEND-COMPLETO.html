@@ -1,0 +1,567 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ECO-COL - Sistema Completo con Backend v3.0</title>
+    <script src="https://unpkg.com/dicom-parser@1.8.11/dist/dicomParser.min.js"></script>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #121212; color: #fff; }
+        
+        .header { background: linear-gradient(135deg, #1565c0, #1976d2); padding: 1rem 2rem; box-shadow: 0 4px 12px rgba(0,0,0,0.3); }
+        .header h1 { font-size: 1.5rem; }
+        .status { display: flex; gap: 2rem; margin-top: 0.5rem; font-size: 0.9rem; }
+        .status-item { display: flex; align-items: center; gap: 0.5rem; }
+        .connected { color: #4caf50; }
+        .disconnected { color: #f44336; }
+        
+        .container { max-width: 1200px; margin: 2rem auto; padding: 0 2rem; }
+        .section { background: #1e1e1e; border-radius: 12px; padding: 2rem; margin-bottom: 2rem; border: 1px solid #333; }
+        .section h2 { color: #00bfa5; margin-bottom: 1.5rem; font-size: 1.3rem; }
+        
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; color: #00bfa5; margin-bottom: 0.5rem; font-weight: 600; }
+        .form-group input, .form-group select { width: 100%; padding: 0.8rem; background: #252525; border: 1px solid #333; color: #fff; border-radius: 6px; font-size: 0.9rem; }
+        .form-group input:focus, .form-group select:focus { outline: none; border-color: #00bfa5; }
+        
+        .btn { padding: 0.8rem 2rem; border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 0.9rem; transition: all 0.3s; }
+        .btn-primary { background: #1976d2; color: #fff; }
+        .btn-primary:hover { background: #1565c0; transform: translateY(-2px); }
+        .btn-success { background: #4caf50; color: #fff; }
+        .btn-success:hover { background: #45a049; }
+        .btn-secondary { background: #333; color: #fff; }
+        .btn-secondary:hover { background: #444; }
+        
+        .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 1rem; }
+        .card { background: #252525; border: 1px solid #333; border-radius: 8px; padding: 1rem; transition: all 0.3s; }
+        .card:hover { border-color: #00bfa5; transform: translateY(-2px); }
+        .card h3 { color: #00bfa5; margin-bottom: 0.5rem; font-size: 1rem; }
+        .card p { font-size: 0.85rem; color: #b0b0b0; margin: 0.3rem 0; }
+        .card .status-badge { display: inline-block; padding: 0.2rem 0.6rem; border-radius: 12px; font-size: 0.7rem; font-weight: 700; margin-top: 0.5rem; }
+        .status-badge.pending { background: #ff9800; color: #000; }
+        .status-badge.completed { background: #4caf50; color: #fff; }
+        .status-badge.has-dicom { background: #2196f3; color: #fff; }
+        
+        .viewer { background: #000; border-radius: 8px; padding: 1rem; min-height: 400px; display: flex; align-items: center; justify-content: center; }
+        #canvas { max-width: 100%; max-height: 500px; border: 2px solid #00bfa5; box-shadow: 0 8px 32px rgba(0,191,165,0.3); }
+        .empty-viewer { text-align: center; color: #666; }
+        
+        .notification { position: fixed; top: 20px; right: 20px; padding: 1rem 1.5rem; border-radius: 8px; font-weight: 600; z-index: 9999; animation: slideIn 0.3s; max-width: 400px; }
+        .notification.success { background: #4caf50; }
+        .notification.error { background: #f44336; }
+        .notification.info { background: #2196f3; }
+        @keyframes slideIn { from { transform: translateX(450px); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+        
+        .file-input-wrapper { position: relative; display: inline-block; cursor: pointer; }
+        .file-input-wrapper input[type="file"] { display: none; }
+        .file-input-label { display: block; padding: 0.8rem 2rem; background: #333; color: #fff; border-radius: 6px; cursor: pointer; transition: all 0.3s; }
+        .file-input-label:hover { background: #444; }
+        .file-name { margin-top: 0.5rem; color: #00bfa5; font-size: 0.85rem; }
+        
+        .tabs { display: flex; gap: 0.5rem; margin-bottom: 1rem; }
+        .tab { padding: 0.6rem 1.5rem; background: #2a2a2a; border: none; color: #fff; border-radius: 6px; cursor: pointer; transition: all 0.3s; }
+        .tab.active { background: #00695c; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>🚀 ECO-COL v3.0 - Sistema de Tele-Radiología</h1>
+        <div class="status">
+            <div class="status-item">
+                <span>Backend:</span>
+                <span id="backend-status" class="disconnected">❌ Desconectado</span>
+            </div>
+            <div class="status-item">
+                <span>Usuario:</span>
+                <span id="user-name">No autenticado</span>
+            </div>
+            <button class="btn btn-secondary" onclick="logout()" style="margin-left: auto;">Cerrar Sesión</button>
+        </div>
+    </div>
+
+    <div class="container">
+        <!-- TABS -->
+        <div class="tabs">
+            <button class="tab active" onclick="showTab('hospital1')">🏥 Hospital #1</button>
+            <button class="tab" onclick="showTab('hospital2')">👨‍⚕️ Hospital #2</button>
+            <button class="tab" onclick="showTab('admin')">⚙️ Admin</button>
+        </div>
+
+        <!-- HOSPITAL 1 TAB -->
+        <div id="tab-hospital1">
+            <div class="section">
+                <h2>👤 1. Registrar Paciente</h2>
+                <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem;">
+                    <div class="form-group">
+                        <label>Nombre Completo</label>
+                        <input type="text" id="pat-name" placeholder="García Pérez, Ana María">
+                    </div>
+                    <div class="form-group">
+                        <label>DNI/Cédula</label>
+                        <input type="text" id="pat-dni" placeholder="12345678">
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="createPatientAndStudy()">✅ Crear Paciente y Estudio</button>
+            </div>
+
+            <div class="section">
+                <h2>📁 2. Subir Ecografía DICOM</h2>
+                <div class="form-group">
+                    <label>Seleccionar Estudio</label>
+                    <select id="study-select-h1">
+                        <option value="">Primero crea un paciente...</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <label>Archivo DICOM</label>
+                    <div class="file-input-wrapper">
+                        <input type="file" id="dicom-file-h1" accept=".dcm,.dicom" onchange="showFileName('h1')">
+                        <label class="file-input-label" for="dicom-file-h1">📎 Seleccionar archivo</label>
+                    </div>
+                    <div class="file-name" id="file-name-h1"></div>
+                </div>
+                <button class="btn btn-success" onclick="uploadDICOM('h1')">📤 Subir al Servidor</button>
+            </div>
+
+            <div class="section">
+                <h2>📊 Mis Estudios</h2>
+                <div class="grid" id="studies-h1"></div>
+            </div>
+        </div>
+
+        <!-- HOSPITAL 2 TAB -->
+        <div id="tab-hospital2" style="display:none;">
+            <div class="section">
+                <h2>📋 Lista de Trabajo</h2>
+                <div class="grid" id="studies-h2"></div>
+            </div>
+
+            <div class="section" id="study-viewer" style="display:none;">
+                <h2>🖼️ Visualizador DICOM</h2>
+                <div id="patient-info" style="background: #252525; padding: 1rem; border-radius: 8px; margin-bottom: 1rem;"></div>
+                <div class="viewer">
+                    <div class="empty-viewer" id="empty-viewer">
+                        <div style="font-size: 3rem; margin-bottom: 1rem;">📁</div>
+                        <div>Selecciona un estudio con DICOM para visualizar</div>
+                    </div>
+                    <canvas id="canvas" style="display:none;"></canvas>
+                </div>
+                <div style="margin-top: 1rem;">
+                    <h3 style="color: #00bfa5; margin-bottom: 1rem;">💬 Observaciones</h3>
+                    <textarea id="observations" style="width: 100%; min-height: 150px; padding: 1rem; background: #252525; border: 1px solid #333; color: #fff; border-radius: 6px; font-family: inherit;"></textarea>
+                    <div style="display: flex; gap: 1rem; margin-top: 1rem;">
+                        <button class="btn btn-primary" onclick="saveObservations()">💾 Guardar</button>
+                        <button class="btn btn-success" onclick="completeStudy()">✅ Completar y Enviar</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ADMIN TAB -->
+        <div id="tab-admin" style="display:none;">
+            <div class="section">
+                <h2>📊 Estadísticas</h2>
+                <div class="grid">
+                    <div class="card">
+                        <h3>Total Estudios</h3>
+                        <p style="font-size: 2rem; color: #00bfa5;" id="stat-total">0</p>
+                    </div>
+                    <div class="card">
+                        <h3>Pendientes</h3>
+                        <p style="font-size: 2rem; color: #ff9800;" id="stat-pending">0</p>
+                    </div>
+                    <div class="card">
+                        <h3>Completados</h3>
+                        <p style="font-size: 2rem; color: #4caf50;" id="stat-completed">0</p>
+                    </div>
+                    <div class="card">
+                        <h3>Pacientes</h3>
+                        <p style="font-size: 2rem; color: #2196f3;" id="stat-patients">0</p>
+                    </div>
+                </div>
+            </div>
+            <div class="section">
+                <h2>📋 Todos los Estudios</h2>
+                <div class="grid" id="studies-admin"></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        const API_URL = 'http://localhost:3000/api';
+        let apiToken = localStorage.getItem('ecocol_backend_token');
+        let currentStudyId = null;
+        let canvas, ctx;
+
+        // Verificar backend
+        async function checkBackend() {
+            try {
+                const res = await fetch('http://localhost:3000/health');
+                if (res.ok) {
+                    document.getElementById('backend-status').innerHTML = '✅ Conectado';
+                    document.getElementById('backend-status').className = 'connected';
+                }
+            } catch (error) {
+                document.getElementById('backend-status').innerHTML = '❌ Desconectado';
+                document.getElementById('backend-status').className = 'disconnected';
+            }
+        }
+
+        // Auto-login si hay token
+        async function autoLogin() {
+            if (!apiToken) {
+                // Login automático para demo
+                await loginWithCredentials('hospital1@ecocol.com', 'demo123');
+            } else {
+                try {
+                    await loadStudies();
+                    document.getElementById('user-name').textContent = 'Hospital Regional Norte';
+                } catch {
+                    await loginWithCredentials('hospital1@ecocol.com', 'demo123');
+                }
+            }
+        }
+
+        async function loginWithCredentials(email, password) {
+            try {
+                const res = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+                const data = await res.json();
+                apiToken = data.token;
+                localStorage.setItem('ecocol_backend_token', data.token);
+                document.getElementById('user-name').textContent = data.user.name;
+                notify('Login exitoso', 'success');
+                await loadStudies();
+            } catch (error) {
+                notify('Error en login', 'error');
+            }
+        }
+
+        function logout() {
+            localStorage.removeItem('ecocol_backend_token');
+            location.reload();
+        }
+
+        // Crear paciente y estudio
+        async function createPatientAndStudy() {
+            const name = document.getElementById('pat-name').value.trim();
+            const dni = document.getElementById('pat-dni').value.trim();
+
+            if (!name || !dni) {
+                notify('Completa todos los campos', 'error');
+                return;
+            }
+
+            try {
+                // Crear paciente
+                const resPatient = await fetch(`${API_URL}/patients`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiToken}`
+                    },
+                    body: JSON.stringify({ name, dni, age: 45, gender: 'F', phone: '555-0000' })
+                });
+                const patient = await resPatient.json();
+
+                // Crear estudio
+                const resStudy = await fetch(`${API_URL}/studies`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiToken}`
+                    },
+                    body: JSON.stringify({
+                        patient_id: patient.id,
+                        hospital: 'Hospital Regional Norte',
+                        modality: 'US'
+                    })
+                });
+                const study = await resStudy.json();
+
+                notify(`✅ Paciente y estudio creados: ${study.external_id}`, 'success');
+                
+                // Limpiar formulario
+                document.getElementById('pat-name').value = '';
+                document.getElementById('pat-dni').value = '';
+                
+                await loadStudies();
+            } catch (error) {
+                notify('Error: ' + error.message, 'error');
+            }
+        }
+
+        // Mostrar nombre de archivo
+        function showFileName(source) {
+            const input = document.getElementById(`dicom-file-${source}`);
+            const display = document.getElementById(`file-name-${source}`);
+            if (input.files.length > 0) {
+                display.textContent = `📎 ${input.files[0].name}`;
+            }
+        }
+
+        // Subir DICOM
+        async function uploadDICOM(source) {
+            const file = document.getElementById(`dicom-file-${source}`).files[0];
+            const studyId = document.getElementById(`study-select-${source}`).value;
+
+            if (!file) {
+                notify('Selecciona un archivo DICOM', 'error');
+                return;
+            }
+
+            if (!studyId) {
+                notify('Selecciona un estudio', 'error');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('dicom', file);
+
+            try {
+                const res = await fetch(`${API_URL}/dicom/upload/${studyId}`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${apiToken}` },
+                    body: formData
+                });
+
+                const result = await res.json();
+                notify('✅ DICOM subido correctamente', 'success');
+                await loadStudies();
+                
+                // Limpiar
+                document.getElementById(`dicom-file-${source}`).value = '';
+                document.getElementById(`file-name-${source}`).textContent = '';
+            } catch (error) {
+                notify('Error subiendo DICOM: ' + error.message, 'error');
+            }
+        }
+
+        // Cargar estudios
+        async function loadStudies() {
+            try {
+                const res = await fetch(`${API_URL}/studies`, {
+                    headers: { 'Authorization': `Bearer ${apiToken}` }
+                });
+                const studies = await res.json();
+
+                // Hospital 1
+                const listH1 = document.getElementById('studies-h1');
+                const selectH1 = document.getElementById('study-select-h1');
+                listH1.innerHTML = '';
+                selectH1.innerHTML = '<option value="">Seleccionar estudio...</option>';
+
+                // Hospital 2
+                const listH2 = document.getElementById('studies-h2');
+                listH2.innerHTML = '';
+
+                // Admin
+                const listAdmin = document.getElementById('studies-admin');
+                listAdmin.innerHTML = '';
+
+                // Stats
+                const pending = studies.filter(s => s.status === 'pending').length;
+                const completed = studies.filter(s => s.status === 'completed').length;
+                document.getElementById('stat-total').textContent = studies.length;
+                document.getElementById('stat-pending').textContent = pending;
+                document.getElementById('stat-completed').textContent = completed;
+
+                studies.forEach(study => {
+                    const hasDicom = !!study.dicom_file_path;
+                    
+                    // Card HTML
+                    const card = `
+                        <div class="card" onclick="selectStudy(${study.id})">
+                            <h3>${study.external_id}</h3>
+                            <p><strong>Paciente:</strong> ${study.patient_name || 'N/A'}</p>
+                            <p><strong>Hospital:</strong> ${study.hospital}</p>
+                            <p><strong>Fecha:</strong> ${study.created_at?.split('T')[0] || 'N/A'}</p>
+                            <span class="status-badge ${study.status}">${study.status === 'pending' ? 'PENDIENTE' : 'COMPLETADO'}</span>
+                            ${hasDicom ? '<span class="status-badge has-dicom">✅ DICOM</span>' : '<span class="status-badge" style="background:#666">❌ Sin DICOM</span>'}
+                        </div>
+                    `;
+
+                    listH1.innerHTML += card;
+                    listH2.innerHTML += card;
+                    listAdmin.innerHTML += card;
+
+                    // Select option
+                    const option = document.createElement('option');
+                    option.value = study.id;
+                    option.textContent = `${study.external_id} - ${study.patient_name}`;
+                    selectH1.appendChild(option);
+                });
+
+                // Patients count
+                const resPatients = await fetch(`${API_URL}/patients`, {
+                    headers: { 'Authorization': `Bearer ${apiToken}` }
+                });
+                const patients = await resPatients.json();
+                document.getElementById('stat-patients').textContent = patients.length;
+
+            } catch (error) {
+                notify('Error cargando estudios', 'error');
+            }
+        }
+
+        // Seleccionar estudio (Hospital 2)
+        async function selectStudy(studyId) {
+            currentStudyId = studyId;
+
+            try {
+                const res = await fetch(`${API_URL}/studies/${studyId}`, {
+                    headers: { 'Authorization': `Bearer ${apiToken}` }
+                });
+                const study = await res.json();
+
+                document.getElementById('study-viewer').style.display = 'block';
+                
+                // Patient info
+                document.getElementById('patient-info').innerHTML = `
+                    <strong>Estudio:</strong> ${study.external_id} | 
+                    <strong>Paciente:</strong> ${study.patient_name} | 
+                    <strong>DNI:</strong> ${study.dni} | 
+                    <strong>Estado:</strong> ${study.status}
+                `;
+
+                // Observations
+                document.getElementById('observations').value = study.observations || '';
+
+                // Load DICOM if available
+                if (study.dicom_file_path) {
+                    await loadDICOMFromServer(studyId);
+                } else {
+                    document.getElementById('empty-viewer').style.display = 'block';
+                    document.getElementById('canvas').style.display = 'none';
+                }
+            } catch (error) {
+                notify('Error cargando estudio', 'error');
+            }
+        }
+
+        // Load DICOM from server
+        async function loadDICOMFromServer(studyId) {
+            try {
+                const res = await fetch(`${API_URL}/dicom/download/${studyId}`, {
+                    headers: { 'Authorization': `Bearer ${apiToken}` }
+                });
+                
+                const blob = await res.blob();
+                const buffer = await blob.arrayBuffer();
+                const dataSet = dicomParser.parseDicom(new Uint8Array(buffer));
+
+                const rows = dataSet.uint16('x00280010');
+                const cols = dataSet.uint16('x00280011');
+                const pixelDataElement = dataSet.elements.x7fe00010;
+
+                if (!pixelDataElement) throw new Error('No pixel data');
+
+                const pixelData = new Uint8Array(dataSet.byteArray.buffer, pixelDataElement.dataOffset, pixelDataElement.length);
+
+                if (!canvas) {
+                    canvas = document.getElementById('canvas');
+                    ctx = canvas.getContext('2d');
+                }
+
+                canvas.width = cols;
+                canvas.height = rows;
+
+                const imgData = ctx.createImageData(cols, rows);
+                const data = imgData.data;
+
+                for (let i = 0; i < rows * cols; i++) {
+                    const val = pixelData[i];
+                    data[i * 4] = data[i * 4 + 1] = data[i * 4 + 2] = val;
+                    data[i * 4 + 3] = 255;
+                }
+
+                ctx.putImageData(imgData, 0, 0);
+
+                document.getElementById('empty-viewer').style.display = 'none';
+                document.getElementById('canvas').style.display = 'block';
+
+                notify('✅ DICOM cargado', 'success');
+            } catch (error) {
+                notify('Error cargando DICOM: ' + error.message, 'error');
+            }
+        }
+
+        // Save observations
+        async function saveObservations() {
+            if (!currentStudyId) return;
+
+            const observations = document.getElementById('observations').value;
+
+            try {
+                await fetch(`${API_URL}/studies/${currentStudyId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiToken}`
+                    },
+                    body: JSON.stringify({ observations, status: 'pending' })
+                });
+
+                notify('✅ Observaciones guardadas', 'success');
+            } catch (error) {
+                notify('Error guardando', 'error');
+            }
+        }
+
+        // Complete study
+        async function completeStudy() {
+            if (!currentStudyId) return;
+
+            const observations = document.getElementById('observations').value;
+
+            if (!observations.trim()) {
+                notify('Escribe observaciones primero', 'error');
+                return;
+            }
+
+            try {
+                await fetch(`${API_URL}/studies/${currentStudyId}`, {
+                    method: 'PUT',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiToken}`
+                    },
+                    body: JSON.stringify({ observations, status: 'completed' })
+                });
+
+                notify('✅ Estudio completado y enviado', 'success');
+                await loadStudies();
+            } catch (error) {
+                notify('Error completando estudio', 'error');
+            }
+        }
+
+        // Show tab
+        function showTab(tab) {
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            document.querySelectorAll('[id^="tab-"]').forEach(t => t.style.display = 'none');
+            
+            event.target.classList.add('active');
+            document.getElementById(`tab-${tab}`).style.display = 'block';
+        }
+
+        // Notifications
+        function notify(msg, type = 'info') {
+            const n = document.createElement('div');
+            n.className = `notification ${type}`;
+            n.textContent = msg;
+            document.body.appendChild(n);
+            setTimeout(() => n.remove(), 4000);
+        }
+
+        // Initialize
+        checkBackend();
+        autoLogin();
+        setInterval(checkBackend, 5000);
+    </script>
+</body>
+</html>

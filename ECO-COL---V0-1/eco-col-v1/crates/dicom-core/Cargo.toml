@@ -1,0 +1,41 @@
+[package]
+name = "dicom-core"
+version.workspace = true
+edition.workspace = true
+rust-version.workspace = true
+authors.workspace = true
+license.workspace = true
+
+[dependencies]
+# DICOM parsing
+dicom = "0.6"
+dicom-object = "0.6"
+dicom-core = "0.6"
+dicom-dictionary-std = "0.6"
+dicom-encoding = "0.6"
+dicom-parser = "0.6"
+dicom-transfer-syntax-registry = "0.6"
+
+# Async runtime
+tokio.workspace = true
+
+# Serialization
+serde.workspace = true
+serde_json.workspace = true
+
+# Error handling
+anyhow.workspace = true
+thiserror.workspace = true
+
+# Utilities
+chrono.workspace = true
+tracing.workspace = true
+sha2 = "0.10"
+byteorder = "1.5"
+
+[dev-dependencies]
+criterion = "0.5"
+
+[[bench]]
+name = "parser_benchmark"
+harness = false

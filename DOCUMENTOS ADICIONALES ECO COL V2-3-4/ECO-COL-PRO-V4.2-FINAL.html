@@ -1,0 +1,2213 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ECO-COL PRO - Sistema Profesional de Tele-Radiología</title>
+    
+    <!-- Cornerstone DICOM Libraries - Estándar de la industria -->
+    <script src="https://cdn.jsdelivr.net/npm/cornerstone-core@2.6.1/dist/cornerstone.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/cornerstone-math@0.1.10/dist/cornerstoneMath.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/cornerstone-tools@6.0.10/dist/cornerstoneTools.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dicom-parser@1.8.13/dist/dicomParser.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/cornerstone-wado-image-loader@4.13.2/dist/cornerstoneWADOImageLoader.bundle.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/hammer.js/2.0.8/hammer.min.js"></script>
+    
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        :root {
+            --primary: #1976d2;
+            --primary-dark: #1565c0;
+            --accent: #00bfa5;
+            --success: #4caf50;
+            --warning: #ff9800;
+            --danger: #f44336;
+            --bg-dark: #121212;
+            --bg-medium: #1e1e1e;
+            --bg-light: #252525;
+            --text-primary: #ffffff;
+            --text-secondary: #b0b0b0;
+            --border: #333;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            line-height: 1.6;
+        }
+        
+        /* ==================== HEADER ==================== */
+        .header {
+            background: linear-gradient(135deg, var(--primary), #1e88e5);
+            padding: 1rem 2rem;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.4);
+            position: sticky;
+            top: 0;
+            z-index: 1000;
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            max-width: 1800px;
+            margin: 0 auto;
+        }
+        
+        .header h1 {
+            font-size: 1.5rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .badge {
+            background: rgba(255,255,255,0.2);
+            padding: 0.25rem 0.75rem;
+            border-radius: 20px;
+            font-size: 0.7rem;
+            font-weight: 700;
+        }
+        
+        .status-bar {
+            display: flex;
+            gap: 2rem;
+            margin-top: 0.5rem;
+            font-size: 0.9rem;
+        }
+        
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        /* ==================== TABS ==================== */
+        .tabs {
+            display: flex;
+            gap: 0.5rem;
+            max-width: 1800px;
+            margin: 1rem auto 0;
+            padding: 0 2rem;
+        }
+        
+        .tab {
+            padding: 0.8rem 1.5rem;
+            background: var(--bg-medium);
+            border: none;
+            color: var(--text-secondary);
+            border-radius: 8px 8px 0 0;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: 600;
+            border-bottom: 3px solid transparent;
+        }
+        
+        .tab:hover {
+            background: var(--bg-light);
+            color: var(--text-primary);
+        }
+        
+        .tab.active {
+            background: var(--bg-dark);
+            color: var(--accent);
+            border-bottom-color: var(--accent);
+        }
+        
+        /* ==================== CONTAINER ==================== */
+        .container {
+            max-width: 1800px;
+            margin: 0 auto;
+            padding: 2rem;
+        }
+        
+        .tab-content {
+            display: none;
+        }
+        
+        .tab-content.active {
+            display: block;
+        }
+        
+        /* ==================== SECTIONS ==================== */
+        .section {
+            background: var(--bg-medium);
+            border-radius: 12px;
+            padding: 2rem;
+            margin-bottom: 2rem;
+            border: 1px solid var(--border);
+            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
+        }
+        
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1.5rem;
+        }
+        
+        .section h2 {
+            color: var(--accent);
+            font-size: 1.3rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        /* ==================== FORMS ==================== */
+        .form-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 1rem;
+        }
+        
+        .form-group {
+            margin-bottom: 1rem;
+        }
+        
+        .form-group label {
+            display: block;
+            color: var(--accent);
+            margin-bottom: 0.5rem;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .form-group input,
+        .form-group select,
+        .form-group textarea {
+            width: 100%;
+            padding: 0.8rem;
+            background: var(--bg-light);
+            border: 1px solid var(--border);
+            color: var(--text-primary);
+            border-radius: 6px;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+        }
+        
+        .form-group input:focus,
+        .form-group select:focus,
+        .form-group textarea:focus {
+            outline: none;
+            border-color: var(--accent);
+            box-shadow: 0 0 0 3px rgba(0, 191, 165, 0.1);
+        }
+        
+        /* ==================== BUTTONS ==================== */
+        .btn {
+            padding: 0.8rem 2rem;
+            border: none;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            font-size: 0.9rem;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+        }
+        
+        .btn-primary:hover:not(:disabled) {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(25, 118, 210, 0.4);
+        }
+        
+        .btn-success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .btn-success:hover:not(:disabled) {
+            background: #45a049;
+            transform: translateY(-2px);
+        }
+        
+        .btn-secondary {
+            background: var(--bg-light);
+            color: var(--text-primary);
+            border: 1px solid var(--border);
+        }
+        
+        .btn-secondary:hover {
+            background: #333;
+        }
+        
+        .btn-danger {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .btn-icon {
+            padding: 0.6rem;
+            font-size: 1.2rem;
+        }
+        
+        /* ==================== DICOM VIEWER ==================== */
+        .viewer-container {
+            display: grid;
+            grid-template-columns: 300px 1fr 320px;
+            gap: 1rem;
+            height: calc(100vh - 250px);
+            min-height: 600px;
+        }
+        
+        .viewer-sidebar {
+            background: var(--bg-light);
+            border-radius: 8px;
+            padding: 1rem;
+            overflow-y: auto;
+        }
+        
+        .viewer-main {
+            background: #000;
+            border-radius: 8px;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+        
+        .viewer-toolbar {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 0.8rem;
+            display: flex;
+            gap: 0.5rem;
+            flex-wrap: wrap;
+            border-bottom: 2px solid var(--accent);
+        }
+        
+        .tool-btn {
+            background: rgba(255, 255, 255, 0.1);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+            color: white;
+            padding: 0.6rem 1rem;
+            border-radius: 6px;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-size: 0.85rem;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+        
+        .tool-btn:hover {
+            background: rgba(0, 191, 165, 0.3);
+            border-color: var(--accent);
+        }
+        
+        .tool-btn.active {
+            background: var(--accent);
+            color: #000;
+            border-color: var(--accent);
+        }
+        
+        .viewer-canvas-container {
+            flex: 1;
+            position: relative;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 0;
+        }
+        
+        #dicomCanvas {
+            max-width: 100%;
+            max-height: 100%;
+            object-fit: contain;
+        }
+        
+        .viewer-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            pointer-events: none;
+            color: white;
+            font-size: 12px;
+            font-family: monospace;
+        }
+        
+        .overlay-topleft,
+        .overlay-topright,
+        .overlay-bottomleft,
+        .overlay-bottomright {
+            position: absolute;
+            padding: 10px;
+            background: rgba(0, 0, 0, 0.6);
+            border-radius: 4px;
+        }
+        
+        .overlay-topleft { top: 10px; left: 10px; }
+        .overlay-topright { top: 10px; right: 10px; text-align: right; }
+        .overlay-bottomleft { bottom: 10px; left: 10px; }
+        .overlay-bottomright { bottom: 10px; right: 10px; text-align: right; }
+        
+        .viewer-controls {
+            background: rgba(0, 0, 0, 0.8);
+            padding: 1rem;
+            border-top: 1px solid var(--border);
+        }
+        
+        .cine-controls {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+            margin-bottom: 1rem;
+        }
+        
+        .cine-buttons {
+            display: flex;
+            gap: 0.5rem;
+        }
+        
+        .frame-slider-container {
+            flex: 1;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        
+        .frame-slider {
+            flex: 1;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.2);
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        .frame-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+        }
+        
+        .frame-slider::-moz-range-thumb {
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+            border: none;
+        }
+        
+        .frame-info {
+            color: var(--accent);
+            font-weight: 600;
+            min-width: 80px;
+            text-align: center;
+        }
+        
+        /* ==================== INFO PANEL ==================== */
+        .info-group {
+            margin-bottom: 1.5rem;
+        }
+        
+        .info-group h3 {
+            color: var(--accent);
+            font-size: 0.9rem;
+            margin-bottom: 0.8rem;
+            padding-bottom: 0.5rem;
+            border-bottom: 1px solid var(--border);
+        }
+        
+        .info-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 0.4rem 0;
+            font-size: 0.85rem;
+            border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+        }
+        
+        .info-label {
+            color: var(--text-secondary);
+            font-weight: 600;
+        }
+        
+        .info-value {
+            color: var(--text-primary);
+            text-align: right;
+        }
+        
+        .slider-control {
+            margin: 1rem 0;
+        }
+        
+        .slider-control label {
+            display: flex;
+            justify-content: space-between;
+            margin-bottom: 0.5rem;
+            font-size: 0.85rem;
+            color: var(--accent);
+        }
+        
+        .slider {
+            width: 100%;
+            height: 6px;
+            border-radius: 3px;
+            background: rgba(255, 255, 255, 0.2);
+            outline: none;
+            -webkit-appearance: none;
+        }
+        
+        .slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent);
+            cursor: pointer;
+        }
+        
+        /* ==================== CARDS ==================== */
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 1rem;
+        }
+        
+        .card {
+            background: var(--bg-light);
+            border: 1px solid var(--border);
+            border-radius: 8px;
+            padding: 1.5rem;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .card:hover {
+            border-color: var(--accent);
+            transform: translateY(-2px);
+            box-shadow: 0 4px 12px rgba(0, 191, 165, 0.2);
+        }
+        
+        .card.selected {
+            border-color: var(--accent);
+            border-width: 2px;
+            background: rgba(0, 191, 165, 0.1);
+        }
+        
+        .card h3 {
+            color: var(--accent);
+            margin-bottom: 0.8rem;
+            font-size: 1.1rem;
+        }
+        
+        .card p {
+            font-size: 0.85rem;
+            color: var(--text-secondary);
+            margin: 0.4rem 0;
+        }
+        
+        .status-badge {
+            display: inline-block;
+            padding: 0.3rem 0.8rem;
+            border-radius: 12px;
+            font-size: 0.75rem;
+            font-weight: 700;
+            margin-top: 0.8rem;
+            margin-right: 0.5rem;
+        }
+        
+        .status-badge.pending {
+            background: var(--warning);
+            color: #000;
+        }
+        
+        .status-badge.completed {
+            background: var(--success);
+            color: white;
+        }
+        
+        .status-badge.has-dicom {
+            background: var(--primary);
+            color: white;
+        }
+        
+        /* ==================== EMPTY STATE ==================== */
+        .empty-state {
+            text-align: center;
+            padding: 4rem 2rem;
+            color: var(--text-secondary);
+        }
+        
+        .empty-state-icon {
+            font-size: 4rem;
+            margin-bottom: 1rem;
+            opacity: 0.5;
+        }
+        
+        /* ==================== LOADING ==================== */
+        .loading {
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            text-align: center;
+            z-index: 100;
+        }
+        
+        .spinner {
+            border: 4px solid rgba(255, 255, 255, 0.1);
+            border-top: 4px solid var(--accent);
+            border-radius: 50%;
+            width: 50px;
+            height: 50px;
+            animation: spin 1s linear infinite;
+            margin: 0 auto 1rem;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        /* ==================== NOTIFICATIONS ==================== */
+        .notification {
+            position: fixed;
+            top: 80px;
+            right: 20px;
+            padding: 1rem 1.5rem;
+            border-radius: 8px;
+            font-weight: 600;
+            z-index: 9999;
+            animation: slideIn 0.3s;
+            max-width: 400px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+        }
+        
+        .notification.success {
+            background: var(--success);
+            color: white;
+        }
+        
+        .notification.error {
+            background: var(--danger);
+            color: white;
+        }
+        
+        .notification.info {
+            background: var(--primary);
+            color: white;
+        }
+        
+        @keyframes slideIn {
+            from {
+                transform: translateX(450px);
+                opacity: 0;
+            }
+            to {
+                transform: translateX(0);
+                opacity: 1;
+            }
+        }
+        
+        /* ==================== STATS ==================== */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 1rem;
+            margin-bottom: 2rem;
+        }
+        
+        .stat-card {
+            background: linear-gradient(135deg, var(--bg-light), var(--bg-medium));
+            padding: 1.5rem;
+            border-radius: 8px;
+            border: 1px solid var(--border);
+            text-align: center;
+        }
+        
+        .stat-value {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--accent);
+            margin: 0.5rem 0;
+        }
+        
+        .stat-label {
+            color: var(--text-secondary);
+            font-size: 0.9rem;
+        }
+        
+        /* ==================== FILE UPLOAD ==================== */
+        .upload-zone {
+            border: 2px dashed rgba(255, 255, 255, 0.3);
+            border-radius: 10px;
+            padding: 2rem;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s;
+            background: rgba(0, 0, 0, 0.2);
+        }
+        
+        .upload-zone:hover,
+        .upload-zone.dragover {
+            border-color: var(--accent);
+            background: rgba(0, 191, 165, 0.1);
+        }
+        
+        .upload-icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        /* ==================== MEASUREMENTS ==================== */
+        .measurements-list {
+            max-height: 300px;
+            overflow-y: auto;
+        }
+        
+        .measurement-item {
+            background: rgba(0, 0, 0, 0.3);
+            padding: 0.8rem;
+            margin-bottom: 0.5rem;
+            border-radius: 6px;
+            border-left: 3px solid var(--accent);
+        }
+        
+        .measurement-item strong {
+            color: var(--accent);
+        }
+        
+        /* ==================== RESPONSIVE ==================== */
+        @media (max-width: 1200px) {
+            .viewer-container {
+                grid-template-columns: 1fr;
+                height: auto;
+            }
+            
+            .viewer-sidebar {
+                order: 2;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header h1 {
+                font-size: 1.2rem;
+            }
+            
+            .tabs {
+                overflow-x: auto;
+                flex-wrap: nowrap;
+            }
+            
+            .form-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- ==================== HEADER ==================== -->
+    <div class="header">
+        <div class="header-content">
+            <div>
+                <h1>
+                    🏥 ECO-COL PRO
+                    <span class="badge">SISTEMA PROFESIONAL v4.0</span>
+                </h1>
+                <div class="status-bar">
+                    <div class="status-item">
+                        <span>🟢</span>
+                        <span id="currentRole">Hospital Regional Norte</span>
+                    </div>
+                    <div class="status-item">
+                        <span>👤</span>
+                        <span id="currentUser">Sin autenticar</span>
+                    </div>
+                </div>
+            </div>
+            <button class="btn btn-secondary" onclick="logout()">
+                🚪 Cerrar Sesión
+            </button>
+        </div>
+    </div>
+
+    <!-- ==================== TABS ==================== -->
+    <div class="tabs">
+        <button class="tab active" onclick="switchTab('hospital1')">
+            🏥 Hospital #1 - Periférico
+        </button>
+        <button class="tab" onclick="switchTab('hospital2')">
+            👨‍⚕️ Hospital #2 - Especializado
+        </button>
+        <button class="tab" onclick="switchTab('admin')">
+            ⚙️ Administración
+        </button>
+    </div>
+
+    <!-- ==================== CONTAINER ==================== -->
+    <div class="container">
+        
+        <!-- ==================== HOSPITAL #1 TAB ==================== -->
+        <div id="tab-hospital1" class="tab-content active">
+            <!-- Registro de Paciente -->
+            <div class="section">
+                <div class="section-header">
+                    <h2>👤 Registrar Nuevo Paciente</h2>
+                </div>
+                <div class="form-grid">
+                    <div class="form-group">
+                        <label>Nombre Completo *</label>
+                        <input type="text" id="h1-patient-name" placeholder="García Pérez, Ana María">
+                    </div>
+                    <div class="form-group">
+                        <label>DNI/Cédula *</label>
+                        <input type="text" id="h1-patient-dni" placeholder="12345678">
+                    </div>
+                    <div class="form-group">
+                        <label>Edad</label>
+                        <input type="number" id="h1-patient-age" placeholder="45">
+                    </div>
+                    <div class="form-group">
+                        <label>Género</label>
+                        <select id="h1-patient-gender">
+                            <option value="M">Masculino</option>
+                            <option value="F">Femenino</option>
+                            <option value="O">Otro</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Teléfono</label>
+                        <input type="tel" id="h1-patient-phone" placeholder="555-0000">
+                    </div>
+                </div>
+                <button class="btn btn-primary" onclick="createPatient()">
+                    ✅ Crear Paciente y Estudio
+                </button>
+            </div>
+
+            <!-- Carga de DICOM -->
+            <div class="section">
+                <div class="section-header">
+                    <h2>📁 Cargar Estudio DICOM</h2>
+                </div>
+                
+                <div class="upload-zone" id="h1-upload-zone">
+                    <div class="upload-icon">📤</div>
+                    <h3>Arrastra archivos DICOM aquí</h3>
+                    <p>o haz clic para seleccionar</p>
+                    <input type="file" id="h1-dicom-file" class="file-input" accept=".dcm,.dicom" multiple>
+                </div>
+                
+                <div class="form-group" style="margin-top: 1rem;">
+                    <label>Seleccionar Estudio</label>
+                    <select id="h1-study-select">
+                        <option value="">Seleccionar estudio...</option>
+                    </select>
+                </div>
+                
+                <button class="btn btn-success" onclick="uploadDICOMH1()">
+                    🚀 Subir y Enviar a Hospital #2
+                </button>
+            </div>
+
+            <!-- Visor DICOM Hospital 1 -->
+            <div class="section">
+                <h2>🖼️ Visor DICOM - Hospital #1</h2>
+                <div class="viewer-container">
+                    <div class="viewer-sidebar">
+                        <div class="info-group">
+                            <h3>📋 Información del Paciente</h3>
+                            <div class="info-row">
+                                <span class="info-label">Nombre:</span>
+                                <span class="info-value" id="h1-patient-name-display">-</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">ID:</span>
+                                <span class="info-value" id="h1-patient-id-display">-</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Edad:</span>
+                                <span class="info-value" id="h1-patient-age-display">-</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Género:</span>
+                                <span class="info-value" id="h1-patient-gender-display">-</span>
+                            </div>
+                        </div>
+                        
+                        <div class="info-group">
+                            <h3>🏥 Información del Estudio</h3>
+                            <div class="info-row">
+                                <span class="info-label">Modalidad:</span>
+                                <span class="info-value" id="h1-modality">-</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Fecha:</span>
+                                <span class="info-value" id="h1-study-date">-</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Tamaño:</span>
+                                <span class="info-value" id="h1-image-size">-</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Frames:</span>
+                                <span class="info-value" id="h1-num-frames">-</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="viewer-main" id="h1-viewer-main">
+                        <div class="viewer-toolbar">
+                            <button class="tool-btn active" onclick="setToolH1('wwwc')">
+                                🔆 W/L
+                            </button>
+                            <button class="tool-btn" onclick="setToolH1('zoom')">
+                                🔍 Zoom
+                            </button>
+                            <button class="tool-btn" onclick="setToolH1('pan')">
+                                ✋ Pan
+                            </button>
+                            <button class="tool-btn" onclick="setToolH1('length')">
+                                📏 Medir
+                            </button>
+                            <button class="tool-btn" onclick="resetViewH1()">
+                                🔄 Reset
+                            </button>
+                            <button class="tool-btn" onclick="invertColorsH1()">
+                                🔃 Invertir
+                            </button>
+                        </div>
+                        
+                        <div class="viewer-canvas-container">
+                            <div id="h1-dicom-element" style="width: 100%; height: 100%; position: relative;">
+                                <div class="empty-state">
+                                    <div class="empty-state-icon">🏥</div>
+                                    <h3>Carga un archivo DICOM</h3>
+                                    <p>Arrastra o selecciona un archivo para visualizarlo</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="viewer-controls">
+                            <div class="cine-controls">
+                                <div class="cine-buttons">
+                                    <button class="tool-btn btn-icon" onclick="playPauseH1()" id="h1-play-btn">
+                                        ▶️
+                                    </button>
+                                    <button class="tool-btn btn-icon" onclick="stopCineH1()">
+                                        ⏹️
+                                    </button>
+                                    <button class="tool-btn btn-icon" onclick="prevFrameH1()">
+                                        ⏮️
+                                    </button>
+                                    <button class="tool-btn btn-icon" onclick="nextFrameH1()">
+                                        ⏭️
+                                    </button>
+                                </div>
+                                
+                                <div class="frame-slider-container">
+                                    <input type="range" class="frame-slider" id="h1-frame-slider" min="0" max="0" value="0" onchange="changeFrameH1(this.value)">
+                                    <span class="frame-info" id="h1-frame-info">0/0</span>
+                                </div>
+                                
+                                <div class="form-group" style="margin: 0; width: 120px;">
+                                    <select id="h1-fps-select" onchange="changeFPSH1(this.value)" class="btn btn-secondary" style="width: 100%; padding: 0.4rem;">
+                                        <option value="10">10 FPS</option>
+                                        <option value="15">15 FPS</option>
+                                        <option value="20" selected>20 FPS</option>
+                                        <option value="30">30 FPS</option>
+                                        <option value="60">60 FPS</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="viewer-sidebar">
+                        <div class="info-group">
+                            <h3>🎨 Controles de Imagen</h3>
+                            
+                            <div class="slider-control">
+                                <label>
+                                    <span>Window Center</span>
+                                    <span id="h1-wc-value">-</span>
+                                </label>
+                                <input type="range" class="slider" id="h1-window-center" min="-1000" max="4000" value="40">
+                            </div>
+                            
+                            <div class="slider-control">
+                                <label>
+                                    <span>Window Width</span>
+                                    <span id="h1-ww-value">-</span>
+                                </label>
+                                <input type="range" class="slider" id="h1-window-width" min="1" max="4000" value="400">
+                            </div>
+                            
+                            <div class="slider-control">
+                                <label>
+                                    <span>Zoom</span>
+                                    <span id="h1-zoom-value">1.0x</span>
+                                </label>
+                                <input type="range" class="slider" id="h1-zoom-slider" min="0.5" max="5" step="0.1" value="1">
+                            </div>
+                        </div>
+                        
+                        <div class="info-group">
+                            <h3>📏 Mediciones</h3>
+                            <div id="h1-measurements-list" class="measurements-list">
+                                <p style="text-align: center; color: var(--text-secondary); padding: 1rem;">
+                                    No hay mediciones
+                                </p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lista de Estudios Hospital 1 -->
+            <div class="section">
+                <h2>📊 Mis Estudios</h2>
+                <div class="grid" id="h1-studies-list">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <p>No hay estudios creados</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== HOSPITAL #2 TAB ==================== -->
+        <div id="tab-hospital2" class="tab-content">
+            <!-- Login Radiólogos -->
+            <div class="section" id="h2-login-section">
+                <h2>🔐 Seleccionar Radiólogo</h2>
+                <div class="grid">
+                    <div class="card" onclick="loginRadiologist('Dr. Ortega')">
+                        <h3>👨‍⚕️ Dr. Juan Ortega</h3>
+                        <p><strong>Especialidad:</strong> Radiología General</p>
+                        <p><strong>Estudios Pendientes:</strong> <span id="ortega-pending">0</span></p>
+                    </div>
+                    <div class="card" onclick="loginRadiologist('Dra. Martínez')">
+                        <h3>👩‍⚕️ Dra. Carmen Martínez</h3>
+                        <p><strong>Especialidad:</strong> Ecografía</p>
+                        <p><strong>Estudios Pendientes:</strong> <span id="martinez-pending">0</span></p>
+                    </div>
+                    <div class="card" onclick="loginRadiologist('Dr. Rodríguez')">
+                        <h3>👨‍⚕️ Dr. Luis Rodríguez</h3>
+                        <p><strong>Especialidad:</strong> TAC y Resonancia</p>
+                        <p><strong>Estudios Pendientes:</strong> <span id="rodriguez-pending">0</span></p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Worklist Hospital 2 -->
+            <div class="section" id="h2-worklist-section" style="display: none;">
+                <div class="section-header">
+                    <h2>📋 Lista de Trabajo</h2>
+                    <button class="btn btn-secondary" onclick="logoutRadiologist()">
+                        🚪 Cambiar Usuario
+                    </button>
+                </div>
+                <div class="grid" id="h2-studies-list">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <p>No hay estudios pendientes</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Visor DICOM Hospital 2 -->
+            <div class="section" id="h2-viewer-section" style="display: none;">
+                <div class="section-header">
+                    <h2>🖼️ Visor DICOM - Diagnóstico</h2>
+                    <button class="btn btn-secondary" onclick="backToWorklistH2()">
+                        ⬅️ Volver a Lista
+                    </button>
+                </div>
+                
+                <div class="viewer-container">
+                    <div class="viewer-sidebar">
+                        <div class="info-group">
+                            <h3>📋 Información del Paciente</h3>
+                            <div class="info-row">
+                                <span class="info-label">Nombre:</span>
+                                <span class="info-value" id="h2-patient-name-display">-</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">ID:</span>
+                                <span class="info-value" id="h2-patient-id-display">-</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Edad:</span>
+                                <span class="info-value" id="h2-patient-age-display">-</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Género:</span>
+                                <span class="info-value" id="h2-patient-gender-display">-</span>
+                            </div>
+                        </div>
+                        
+                        <div class="info-group">
+                            <h3>🏥 Información del Estudio</h3>
+                            <div class="info-row">
+                                <span class="info-label">ID Estudio:</span>
+                                <span class="info-value" id="h2-study-id">-</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Modalidad:</span>
+                                <span class="info-value" id="h2-modality">-</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Fecha:</span>
+                                <span class="info-value" id="h2-study-date">-</span>
+                            </div>
+                            <div class="info-row">
+                                <span class="info-label">Hospital Origen:</span>
+                                <span class="info-value" id="h2-hospital">-</span>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="viewer-main">
+                        <div class="viewer-toolbar">
+                            <button class="tool-btn active" onclick="setToolH2('wwwc')">
+                                🔆 W/L
+                            </button>
+                            <button class="tool-btn" onclick="setToolH2('zoom')">
+                                🔍 Zoom
+                            </button>
+                            <button class="tool-btn" onclick="setToolH2('pan')">
+                                ✋ Pan
+                            </button>
+                            <button class="tool-btn" onclick="setToolH2('length')">
+                                📏 Distancia
+                            </button>
+                            <button class="tool-btn" onclick="setToolH2('angle')">
+                                📐 Ángulo
+                            </button>
+                            <button class="tool-btn" onclick="setToolH2('ellipse')">
+                                ⭕ Área
+                            </button>
+                            <button class="tool-btn" onclick="resetViewH2()">
+                                🔄 Reset
+                            </button>
+                            <button class="tool-btn" onclick="invertColorsH2()">
+                                🔃 Invertir
+                            </button>
+                            <button class="tool-btn" onclick="clearMeasurementsH2()">
+                                🗑️ Limpiar
+                            </button>
+                        </div>
+                        
+                        <div class="viewer-canvas-container">
+                            <div id="h2-dicom-element" style="width: 100%; height: 100%; position: relative;">
+                                <div class="loading" id="h2-loading" style="display: none;">
+                                    <div class="spinner"></div>
+                                    <p>Cargando imagen DICOM...</p>
+                                </div>
+                            </div>
+                        </div>
+                        
+                        <div class="viewer-controls">
+                            <div class="cine-controls">
+                                <div class="cine-buttons">
+                                    <button class="tool-btn btn-icon" onclick="playPauseH2()" id="h2-play-btn">
+                                        ▶️
+                                    </button>
+                                    <button class="tool-btn btn-icon" onclick="stopCineH2()">
+                                        ⏹️
+                                    </button>
+                                    <button class="tool-btn btn-icon" onclick="prevFrameH2()">
+                                        ⏮️
+                                    </button>
+                                    <button class="tool-btn btn-icon" onclick="nextFrameH2()">
+                                        ⏭️
+                                    </button>
+                                </div>
+                                
+                                <div class="frame-slider-container">
+                                    <input type="range" class="frame-slider" id="h2-frame-slider" min="0" max="0" value="0" onchange="changeFrameH2(this.value)">
+                                    <span class="frame-info" id="h2-frame-info">0/0</span>
+                                </div>
+                                
+                                <div class="form-group" style="margin: 0; width: 120px;">
+                                    <select id="h2-fps-select" onchange="changeFPSH2(this.value)" class="btn btn-secondary" style="width: 100%; padding: 0.4rem;">
+                                        <option value="10">10 FPS</option>
+                                        <option value="15">15 FPS</option>
+                                        <option value="20" selected>20 FPS</option>
+                                        <option value="30">30 FPS</option>
+                                        <option value="60">60 FPS</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <div class="viewer-sidebar">
+                        <div class="info-group">
+                            <h3>🎨 Controles de Imagen</h3>
+                            
+                            <div class="slider-control">
+                                <label>
+                                    <span>Window Center</span>
+                                    <span id="h2-wc-value">-</span>
+                                </label>
+                                <input type="range" class="slider" id="h2-window-center" min="-1000" max="4000" value="40">
+                            </div>
+                            
+                            <div class="slider-control">
+                                <label>
+                                    <span>Window Width</span>
+                                    <span id="h2-ww-value">-</span>
+                                </label>
+                                <input type="range" class="slider" id="h2-window-width" min="1" max="4000" value="400">
+                            </div>
+                            
+                            <div class="slider-control">
+                                <label>
+                                    <span>Zoom</span>
+                                    <span id="h2-zoom-value">1.0x</span>
+                                </label>
+                                <input type="range" class="slider" id="h2-zoom-slider" min="0.5" max="5" step="0.1" value="1">
+                            </div>
+                        </div>
+                        
+                        <div class="info-group">
+                            <h3>📏 Mediciones</h3>
+                            <div id="h2-measurements-list" class="measurements-list">
+                                <p style="text-align: center; color: var(--text-secondary); padding: 1rem;">
+                                    Use las herramientas de medición
+                                </p>
+                            </div>
+                        </div>
+                        
+                        <div class="info-group">
+                            <h3>📝 Observaciones</h3>
+                            <textarea id="h2-observations" rows="6" placeholder="Escribir hallazgos y diagnóstico..." style="width: 100%; padding: 0.8rem; background: rgba(0,0,0,0.3); border: 1px solid var(--border); color: white; border-radius: 6px;"></textarea>
+                            
+                            <button class="btn btn-primary" style="width: 100%; margin-top: 1rem;" onclick="saveObservationsH2()">
+                                💾 Guardar Observaciones
+                            </button>
+                            
+                            <button class="btn btn-success" style="width: 100%; margin-top: 0.5rem;" onclick="completeStudyH2()">
+                                ✅ Completar y Enviar
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- ==================== ADMIN TAB ==================== -->
+        <div id="tab-admin" class="tab-content">
+            <!-- Estadísticas -->
+            <div class="section">
+                <h2>📊 Estadísticas del Sistema</h2>
+                <div class="stats-grid">
+                    <div class="stat-card">
+                        <div class="stat-label">Total Estudios</div>
+                        <div class="stat-value" id="admin-total-studies">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Pendientes</div>
+                        <div class="stat-value" id="admin-pending-studies" style="color: var(--warning);">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Completados</div>
+                        <div class="stat-value" id="admin-completed-studies" style="color: var(--success);">0</div>
+                    </div>
+                    <div class="stat-card">
+                        <div class="stat-label">Total Pacientes</div>
+                        <div class="stat-value" id="admin-total-patients">0</div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lista de Pacientes -->
+            <div class="section">
+                <h2>👥 Pacientes Registrados</h2>
+                <div class="grid" id="admin-patients-list">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">👤</div>
+                        <p>No hay pacientes registrados</p>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Lista de Estudios -->
+            <div class="section">
+                <h2>📋 Todos los Estudios</h2>
+                <div class="grid" id="admin-studies-list">
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📄</div>
+                        <p>No hay estudios registrados</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // ==================== INICIALIZACIÓN CORNERSTONE ====================
+        let h1Element, h2Element;
+        let h1ImageIds = [];
+        let h2ImageIds = [];
+        let h1CurrentIndex = 0;
+        let h2CurrentIndex = 0;
+        let h1PlayingCine = false;
+        let h2PlayingCine = false;
+        let h1CineInterval = null;
+        let h2CineInterval = null;
+        let h1FPS = 20;
+        let h2FPS = 20;
+        let currentH2Study = null;
+
+        // Configurar Cornerstone WADO Image Loader
+        cornerstoneWADOImageLoader.external.cornerstone = cornerstone;
+        cornerstoneWADOImageLoader.external.dicomParser = dicomParser;
+
+        const config = {
+            maxWebWorkers: navigator.hardwareConcurrency || 4,
+            startWebWorkersOnDemand: true,
+            taskConfiguration: {
+                decodeTask: {
+                    initializeCodecsOnStartup: false,
+                    strict: false
+                }
+            }
+        };
+        cornerstoneWADOImageLoader.webWorkerManager.initialize(config);
+
+        // Configurar Cornerstone Tools
+        cornerstoneTools.external.cornerstone = cornerstone;
+        cornerstoneTools.external.Hammer = Hammer;
+        cornerstoneTools.external.cornerstoneMath = cornerstoneMath;
+        cornerstoneTools.init();
+
+        // Agregar herramientas
+        cornerstoneTools.addTool(cornerstoneTools.WwwcTool);
+        cornerstoneTools.addTool(cornerstoneTools.ZoomTool);
+        cornerstoneTools.addTool(cornerstoneTools.PanTool);
+        cornerstoneTools.addTool(cornerstoneTools.LengthTool);
+        cornerstoneTools.addTool(cornerstoneTools.AngleTool);
+        cornerstoneTools.addTool(cornerstoneTools.EllipticalRoiTool);
+
+        // ==================== BASE DE DATOS LOCAL ====================
+        const DB = {
+            patients: [],
+            studies: [],
+            
+            init() {
+                const savedPatients = localStorage.getItem('ecocol_patients');
+                const savedStudies = localStorage.getItem('ecocol_studies');
+                
+                if (savedPatients) this.patients = JSON.parse(savedPatients);
+                if (savedStudies) this.studies = JSON.parse(savedStudies);
+            },
+            
+            save() {
+                localStorage.setItem('ecocol_patients', JSON.stringify(this.patients));
+                localStorage.setItem('ecocol_studies', JSON.stringify(this.studies));
+            },
+            
+            addPatient(patient) {
+                const id = 'PAC-' + String(this.patients.length + 1).padStart(3, '0');
+                const newPatient = { id, ...patient, createdAt: new Date().toISOString() };
+                this.patients.push(newPatient);
+                this.save();
+                return newPatient;
+            },
+            
+            addStudy(study) {
+                const id = 'ECO-' + String(this.studies.length + 1).padStart(3, '0');
+                const newStudy = {
+                    id,
+                    ...study,
+                    status: 'pending',
+                    createdAt: new Date().toISOString(),
+                    completedAt: null,
+                    radiologist: null,
+                    observations: ''
+                };
+                this.studies.push(newStudy);
+                this.save();
+                return newStudy;
+            },
+            
+            updateStudy(id, updates) {
+                const index = this.studies.findIndex(s => s.id === id);
+                if (index !== -1) {
+                    this.studies[index] = { ...this.studies[index], ...updates };
+                    this.save();
+                    return this.studies[index];
+                }
+                return null;
+            },
+            
+            getStudy(id) {
+                return this.studies.find(s => s.id === id);
+            },
+            
+            getPatient(id) {
+                return this.patients.find(p => p.id === id);
+            }
+        };
+
+        // Inicializar DB
+        DB.init();
+
+        // ==================== FUNCIONES GLOBALES ====================
+        function switchTab(tabName) {
+            // Ocultar todos los tabs
+            document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+            document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+            
+            // Mostrar el tab seleccionado
+            document.getElementById('tab-' + tabName).classList.add('active');
+            event.target.classList.add('active');
+            
+            // Actualizar datos según el tab
+            if (tabName === 'hospital1') {
+                loadH1Studies();
+            } else if (tabName === 'hospital2') {
+                // Ya se muestra el login
+            } else if (tabName === 'admin') {
+                loadAdminData();
+            }
+        }
+
+        function notify(message, type = 'info') {
+            const notification = document.createElement('div');
+            notification.className = `notification ${type}`;
+            notification.textContent = message;
+            document.body.appendChild(notification);
+            
+            setTimeout(() => {
+                notification.style.animation = 'slideOut 0.3s';
+                setTimeout(() => notification.remove(), 300);
+            }, 3000);
+        }
+
+        function logout() {
+            if (confirm('¿Cerrar sesión?')) {
+                location.reload();
+            }
+        }
+
+        // ==================== HOSPITAL #1 FUNCTIONS ====================
+        function createPatient() {
+            const name = document.getElementById('h1-patient-name').value.trim();
+            const dni = document.getElementById('h1-patient-dni').value.trim();
+            const age = parseInt(document.getElementById('h1-patient-age').value) || 0;
+            const gender = document.getElementById('h1-patient-gender').value;
+            const phone = document.getElementById('h1-patient-phone').value.trim();
+            
+            if (!name || !dni) {
+                notify('Complete los campos obligatorios', 'error');
+                return;
+            }
+            
+            // Crear paciente
+            const patient = DB.addPatient({ name, dni, age, gender, phone });
+            
+            // Crear estudio asociado
+            const study = DB.addStudy({
+                patientId: patient.id,
+                hospital: 'Hospital Regional Norte',
+                modality: 'US',
+                date: new Date().toISOString().split('T')[0]
+            });
+            
+            notify(`✅ Paciente y estudio creados: ${study.id}`, 'success');
+            
+            // Limpiar formulario
+            document.getElementById('h1-patient-name').value = '';
+            document.getElementById('h1-patient-dni').value = '';
+            document.getElementById('h1-patient-age').value = '';
+            document.getElementById('h1-patient-phone').value = '';
+            
+            // Recargar lista
+            loadH1Studies();
+        }
+
+        function loadH1Studies() {
+            const select = document.getElementById('h1-study-select');
+            const list = document.getElementById('h1-studies-list');
+            
+            select.innerHTML = '<option value="">Seleccionar estudio...</option>';
+            list.innerHTML = '';
+            
+            DB.studies.forEach(study => {
+                const patient = DB.getPatient(study.patientId);
+                
+                // Agregar a select
+                const option = document.createElement('option');
+                option.value = study.id;
+                option.textContent = `${study.id} - ${patient ? patient.name : 'N/A'}`;
+                select.appendChild(option);
+                
+                // Agregar a lista
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.innerHTML = `
+                    <h3>${study.id}</h3>
+                    <p><strong>Paciente:</strong> ${patient ? patient.name : 'N/A'}</p>
+                    <p><strong>DNI:</strong> ${patient ? patient.dni : 'N/A'}</p>
+                    <p><strong>Fecha:</strong> ${study.date}</p>
+                    <p><strong>Modalidad:</strong> ${study.modality}</p>
+                    <span class="status-badge ${study.status}">${study.status === 'pending' ? 'PENDIENTE' : 'COMPLETADO'}</span>
+                    ${study.hasDICOM ? '<span class="status-badge has-dicom">✅ DICOM</span>' : ''}
+                `;
+                list.appendChild(card);
+            });
+            
+            if (DB.studies.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📋</div>
+                        <p>No hay estudios creados</p>
+                    </div>
+                `;
+            }
+        }
+
+        // Setup upload zone H1
+        const h1UploadZone = document.getElementById('h1-upload-zone');
+        const h1FileInput = document.getElementById('h1-dicom-file');
+        
+        h1UploadZone.addEventListener('click', () => h1FileInput.click());
+        
+        h1UploadZone.addEventListener('dragover', (e) => {
+            e.preventDefault();
+            h1UploadZone.classList.add('dragover');
+        });
+        
+        h1UploadZone.addEventListener('dragleave', () => {
+            h1UploadZone.classList.remove('dragover');
+        });
+        
+        h1UploadZone.addEventListener('drop', (e) => {
+            e.preventDefault();
+            h1UploadZone.classList.remove('dragover');
+            const files = Array.from(e.dataTransfer.files);
+            handleDICOMFilesH1(files);
+        });
+        
+        h1FileInput.addEventListener('change', (e) => {
+            const files = Array.from(e.target.files);
+            handleDICOMFilesH1(files);
+        });
+
+        async function handleDICOMFilesH1_OLD(files) {
+            try {
+                h1ImageIds = [];
+                
+                for (const file of files) {
+                    const imageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
+                    h1ImageIds.push(imageId);
+                }
+                
+                if (h1ImageIds.length > 0) {
+                    h1CurrentIndex = 0;
+                    await loadImageH1(h1ImageIds[0]);
+                    updateFrameControlsH1();
+                    notify(`✅ ${h1ImageIds.length} imagen(es) cargadas`, 'success');
+                }
+            } catch (error) {
+                console.error('Error loading DICOM:', error);
+                notify('Error al cargar DICOM: ' + error.message, 'error');
+            }
+        }
+
+        async function handleDICOMFilesH1(files) {
+            console.log(`📁 Procesando ${files.length} archivo(s) DICOM...`);
+            
+            try {
+                h1ImageIds = [];
+                
+                for (const file of files) {
+                    const baseImageId = cornerstoneWADOImageLoader.wadouri.fileManager.add(file);
+                    console.log('🆔 Base ImageId:', baseImageId);
+                    
+                    const image = await cornerstone.loadImage(baseImageId);
+                    const numFrames = image.data.intString('x00280008') || 1;
+                    
+                    console.log(`📊 Frames detectados: ${numFrames}`);
+                    
+                    if (numFrames > 1) {
+                        for (let i = 0; i < numFrames; i++) {
+                            const frameImageId = baseImageId + `&frame=${i}`;
+                            h1ImageIds.push(frameImageId);
+                        }
+                        console.log(`✅ Multi-frame procesado: ${numFrames} frames`);
+                    } else {
+                        h1ImageIds.push(baseImageId);
+                        console.log('✅ Single frame procesado');
+                    }
+                }
+                
+                if (h1ImageIds.length > 0) {
+                    h1CurrentIndex = 0;
+                    await loadImageH1(h1ImageIds[0]);
+                    updateFrameControlsH1();
+                    notify(`✅ ${h1ImageIds.length} frame(s) cargados`, 'success');
+                    console.log('📋 ImageIds almacenados:', h1ImageIds);
+                }
+            } catch (error) {
+                console.error('❌ Error loading DICOM:', error);
+                notify('Error al cargar DICOM: ' + error.message, 'error');
+            }
+        }
+
+        async function loadImageH1(imageId) {
+            try {
+                // Inicializar elemento si no existe
+                if (!h1Element) {
+                    h1Element = document.getElementById('h1-dicom-element');
+                    const emptyState = h1Element.querySelector('.empty-state');
+                    if (emptyState) emptyState.remove();
+                    cornerstone.enable(h1Element);
+                    
+                    // Activar herramienta por defecto
+                    cornerstoneTools.setToolActive('Wwwc', { mouseButtonMask: 1 });
+                    
+                    // Event listeners
+                    h1Element.addEventListener('cornerstoneimagerendered', updateImageInfoH1);
+                }
+                
+                const image = await cornerstone.loadImage(imageId);
+                cornerstone.displayImage(h1Element, image);
+                
+                // Actualizar información
+                updatePatientInfoH1(image);
+                updateImageInfoH1();
+                
+            } catch (error) {
+                console.error('Error displaying image:', error);
+                notify('Error al mostrar imagen: ' + error.message, 'error');
+            }
+        }
+
+        function updatePatientInfoH1(image) {
+            try {
+                const data = image.data;
+                
+                document.getElementById('h1-patient-name-display').textContent = 
+                    data.string('x00100010') || '-';
+                document.getElementById('h1-patient-id-display').textContent = 
+                    data.string('x00100020') || '-';
+                document.getElementById('h1-patient-age-display').textContent = 
+                    data.string('x00101010') || '-';
+                document.getElementById('h1-patient-gender-display').textContent = 
+                    data.string('x00100040') || '-';
+                    
+                document.getElementById('h1-modality').textContent = 
+                    data.string('x00080060') || '-';
+                document.getElementById('h1-study-date').textContent = 
+                    formatDate(data.string('x00080020')) || '-';
+                document.getElementById('h1-image-size').textContent = 
+                    `${image.width} × ${image.height}`;
+                document.getElementById('h1-num-frames').textContent = 
+                    data.string('x00280008') || '1';
+                    
+            } catch (e) {
+                console.error('Error updating patient info:', e);
+            }
+        }
+
+        function updateImageInfoH1() {
+            try {
+                if (!h1Element) return;
+                
+                const viewport = cornerstone.getViewport(h1Element);
+                if (!viewport) return;
+                
+                document.getElementById('h1-wc-value').textContent = Math.round(viewport.voi.windowCenter);
+                document.getElementById('h1-ww-value').textContent = Math.round(viewport.voi.windowWidth);
+                document.getElementById('h1-zoom-value').textContent = viewport.scale.toFixed(1) + 'x';
+                
+                document.getElementById('h1-window-center').value = viewport.voi.windowCenter;
+                document.getElementById('h1-window-width').value = viewport.voi.windowWidth;
+                document.getElementById('h1-zoom-slider').value = viewport.scale;
+                
+            } catch (e) {
+                console.error('Error updating image info:', e);
+            }
+        }
+
+        function updateFrameControlsH1() {
+            const slider = document.getElementById('h1-frame-slider');
+            const info = document.getElementById('h1-frame-info');
+            
+            slider.max = h1ImageIds.length - 1;
+            slider.value = h1CurrentIndex;
+            info.textContent = `${h1CurrentIndex + 1}/${h1ImageIds.length}`;
+        }
+
+        function setToolH1(toolName) {
+            if (!h1Element) return;
+            
+            // Desactivar todas las herramientas
+            cornerstoneTools.setToolPassive('Wwwc');
+            cornerstoneTools.setToolPassive('Zoom');
+            cornerstoneTools.setToolPassive('Pan');
+            cornerstoneTools.setToolPassive('Length');
+            
+            // Activar la herramienta seleccionada
+            const toolMap = {
+                'wwwc': 'Wwwc',
+                'zoom': 'Zoom',
+                'pan': 'Pan',
+                'length': 'Length'
+            };
+            
+            cornerstoneTools.setToolActive(toolMap[toolName], { mouseButtonMask: 1 });
+            
+            // Actualizar UI
+            document.querySelectorAll('#tab-hospital1 .tool-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+
+        function resetViewH1() {
+            if (h1Element) {
+                cornerstone.reset(h1Element);
+                updateImageInfoH1();
+            }
+        }
+
+        function invertColorsH1() {
+            if (h1Element) {
+                const viewport = cornerstone.getViewport(h1Element);
+                viewport.invert = !viewport.invert;
+                cornerstone.setViewport(h1Element, viewport);
+            }
+        }
+
+        function playPauseH1() {
+            if (h1ImageIds.length <= 1) return;
+            
+            h1PlayingCine = !h1PlayingCine;
+            document.getElementById('h1-play-btn').textContent = h1PlayingCine ? '⏸️' : '▶️';
+            
+            if (h1PlayingCine) {
+                h1CineInterval = setInterval(() => {
+                    h1CurrentIndex = (h1CurrentIndex + 1) % h1ImageIds.length;
+                    loadImageH1(h1ImageIds[h1CurrentIndex]);
+                    updateFrameControlsH1();
+                }, 1000 / h1FPS);
+            } else {
+                clearInterval(h1CineInterval);
+            }
+        }
+
+        function stopCineH1() {
+            h1PlayingCine = false;
+            clearInterval(h1CineInterval);
+            document.getElementById('h1-play-btn').textContent = '▶️';
+        }
+
+        function nextFrameH1() {
+            if (h1ImageIds.length <= 1) return;
+            stopCineH1();
+            h1CurrentIndex = (h1CurrentIndex + 1) % h1ImageIds.length;
+            loadImageH1(h1ImageIds[h1CurrentIndex]);
+            updateFrameControlsH1();
+        }
+
+        function prevFrameH1() {
+            if (h1ImageIds.length <= 1) return;
+            stopCineH1();
+            h1CurrentIndex = (h1CurrentIndex - 1 + h1ImageIds.length) % h1ImageIds.length;
+            loadImageH1(h1ImageIds[h1CurrentIndex]);
+            updateFrameControlsH1();
+        }
+
+        function changeFrameH1(index) {
+            stopCineH1();
+            h1CurrentIndex = parseInt(index);
+            loadImageH1(h1ImageIds[h1CurrentIndex]);
+            updateFrameControlsH1();
+        }
+
+        function changeFPSH1(fps) {
+            h1FPS = parseInt(fps);
+            if (h1PlayingCine) {
+                stopCineH1();
+                playPauseH1();
+            }
+        }
+
+        // Sliders H1
+        document.getElementById('h1-window-center').addEventListener('input', (e) => {
+            if (!h1Element) return;
+            const viewport = cornerstone.getViewport(h1Element);
+            viewport.voi.windowCenter = parseFloat(e.target.value);
+            cornerstone.setViewport(h1Element, viewport);
+        });
+
+        document.getElementById('h1-window-width').addEventListener('input', (e) => {
+            if (!h1Element) return;
+            const viewport = cornerstone.getViewport(h1Element);
+            viewport.voi.windowWidth = parseFloat(e.target.value);
+            cornerstone.setViewport(h1Element, viewport);
+        });
+
+        document.getElementById('h1-zoom-slider').addEventListener('input', (e) => {
+            if (!h1Element) return;
+            const viewport = cornerstone.getViewport(h1Element);
+            viewport.scale = parseFloat(e.target.value);
+            cornerstone.setViewport(h1Element, viewport);
+        });
+
+        function uploadDICOMH1() {
+            const studyId = document.getElementById('h1-study-select').value;
+            
+            if (!studyId) {
+                notify('Selecciona un estudio', 'error');
+                return;
+            }
+            
+            if (h1ImageIds.length === 0) {
+                notify('Carga primero un archivo DICOM', 'error');
+                return;
+            }
+            
+            // Marcar estudio como que tiene DICOM
+            DB.updateStudy(studyId, { hasDICOM: true });
+            
+            notify('✅ DICOM asociado al estudio y enviado a Hospital #2', 'success');
+            loadH1Studies();
+        }
+
+        // ==================== HOSPITAL #2 FUNCTIONS ====================
+        let currentRadiologist = null;
+
+        function loginRadiologist(name) {
+            currentRadiologist = name;
+            document.getElementById('currentUser').textContent = name;
+            document.getElementById('h2-login-section').style.display = 'none';
+            document.getElementById('h2-worklist-section').style.display = 'block';
+            
+            loadH2Worklist();
+            notify(`Bienvenido ${name}`, 'success');
+        }
+
+        function logoutRadiologist() {
+            currentRadiologist = null;
+            document.getElementById('currentUser').textContent = 'Sin autenticar';
+            document.getElementById('h2-login-section').style.display = 'block';
+            document.getElementById('h2-worklist-section').style.display = 'none';
+            document.getElementById('h2-viewer-section').style.display = 'none';
+        }
+
+        function loadH2Worklist() {
+            const list = document.getElementById('h2-studies-list');
+            list.innerHTML = '';
+            
+            const pendingStudies = DB.studies.filter(s => s.status === 'pending' && s.hasDICOM);
+            
+            // Actualizar contadores
+            document.getElementById('ortega-pending').textContent = pendingStudies.length;
+            document.getElementById('martinez-pending').textContent = pendingStudies.length;
+            document.getElementById('rodriguez-pending').textContent = pendingStudies.length;
+            
+            if (pendingStudies.length === 0) {
+                list.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📭</div>
+                        <p>No hay estudios pendientes</p>
+                    </div>
+                `;
+                return;
+            }
+            
+            pendingStudies.forEach(study => {
+                const patient = DB.getPatient(study.patientId);
+                
+                const card = document.createElement('div');
+                card.className = 'card';
+                card.onclick = () => openStudyH2(study.id);
+                card.innerHTML = `
+                    <h3>${study.id}</h3>
+                    <p><strong>Paciente:</strong> ${patient ? patient.name : 'N/A'}</p>
+                    <p><strong>DNI:</strong> ${patient ? patient.dni : 'N/A'}</p>
+                    <p><strong>Hospital:</strong> ${study.hospital}</p>
+                    <p><strong>Fecha:</strong> ${study.date}</p>
+                    <p><strong>Modalidad:</strong> ${study.modality}</p>
+                    <span class="status-badge pending">PENDIENTE</span>
+                    <span class="status-badge has-dicom">✅ DICOM</span>
+                `;
+                list.appendChild(card);
+            });
+        }
+
+        async function openStudyH2(studyId) {
+            currentH2Study = DB.getStudy(studyId);
+            if (!currentH2Study) return;
+            
+            const patient = DB.getPatient(currentH2Study.patientId);
+            
+            // Mostrar visor
+            document.getElementById('h2-worklist-section').style.display = 'none';
+            document.getElementById('h2-viewer-section').style.display = 'block';
+            
+            // Actualizar información
+            document.getElementById('h2-patient-name-display').textContent = patient ? patient.name : '-';
+            document.getElementById('h2-patient-id-display').textContent = patient ? patient.dni : '-';
+            document.getElementById('h2-patient-age-display').textContent = patient ? patient.age : '-';
+            document.getElementById('h2-patient-gender-display').textContent = patient ? patient.gender : '-';
+            
+            document.getElementById('h2-study-id').textContent = currentH2Study.id;
+            document.getElementById('h2-modality').textContent = currentH2Study.modality;
+            document.getElementById('h2-study-date').textContent = currentH2Study.date;
+            document.getElementById('h2-hospital').textContent = currentH2Study.hospital;
+            
+            // Cargar observaciones previas si existen
+            document.getElementById('h2-observations').value = currentH2Study.observations || '';
+            
+            notify('Estudio abierto. Carga el archivo DICOM para visualizarlo.', 'info');
+        }
+
+        function backToWorklistH2() {
+            document.getElementById('h2-worklist-section').style.display = 'block';
+            document.getElementById('h2-viewer-section').style.display = 'none';
+            currentH2Study = null;
+        }
+
+        function setToolH2(toolName) {
+            if (!h2Element) return;
+            
+            // Desactivar todas las herramientas
+            cornerstoneTools.setToolPassive('Wwwc');
+            cornerstoneTools.setToolPassive('Zoom');
+            cornerstoneTools.setToolPassive('Pan');
+            cornerstoneTools.setToolPassive('Length');
+            cornerstoneTools.setToolPassive('Angle');
+            cornerstoneTools.setToolPassive('EllipticalRoi');
+            
+            // Activar la herramienta seleccionada
+            const toolMap = {
+                'wwwc': 'Wwwc',
+                'zoom': 'Zoom',
+                'pan': 'Pan',
+                'length': 'Length',
+                'angle': 'Angle',
+                'ellipse': 'EllipticalRoi'
+            };
+            
+            cornerstoneTools.setToolActive(toolMap[toolName], { mouseButtonMask: 1 });
+            
+            // Actualizar UI
+            document.querySelectorAll('#tab-hospital2 .viewer-toolbar .tool-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+        }
+
+        function resetViewH2() {
+            if (h2Element) {
+                cornerstone.reset(h2Element);
+                updateImageInfoH2();
+            }
+        }
+
+        function invertColorsH2() {
+            if (h2Element) {
+                const viewport = cornerstone.getViewport(h2Element);
+                viewport.invert = !viewport.invert;
+                cornerstone.setViewport(h2Element, viewport);
+            }
+        }
+
+        function clearMeasurementsH2() {
+            if (h2Element) {
+                const toolState = cornerstoneTools.globalImageIdSpecificToolStateManager.saveToolState();
+                cornerstoneTools.clearToolState(h2Element, 'Length');
+                cornerstoneTools.clearToolState(h2Element, 'Angle');
+                cornerstoneTools.clearToolState(h2Element, 'EllipticalRoi');
+                cornerstone.updateImage(h2Element);
+                notify('Mediciones eliminadas', 'info');
+            }
+        }
+
+        function playPauseH2() {
+            if (h2ImageIds.length <= 1) return;
+            
+            h2PlayingCine = !h2PlayingCine;
+            document.getElementById('h2-play-btn').textContent = h2PlayingCine ? '⏸️' : '▶️';
+            
+            if (h2PlayingCine) {
+                h2CineInterval = setInterval(() => {
+                    h2CurrentIndex = (h2CurrentIndex + 1) % h2ImageIds.length;
+                    loadImageH2(h2ImageIds[h2CurrentIndex]);
+                    updateFrameControlsH2();
+                }, 1000 / h2FPS);
+            } else {
+                clearInterval(h2CineInterval);
+            }
+        }
+
+        function stopCineH2() {
+            h2PlayingCine = false;
+            clearInterval(h2CineInterval);
+            document.getElementById('h2-play-btn').textContent = '▶️';
+        }
+
+        function nextFrameH2() {
+            if (h2ImageIds.length <= 1) return;
+            stopCineH2();
+            h2CurrentIndex = (h2CurrentIndex + 1) % h2ImageIds.length;
+            loadImageH2(h2ImageIds[h2CurrentIndex]);
+            updateFrameControlsH2();
+        }
+
+        function prevFrameH2() {
+            if (h2ImageIds.length <= 1) return;
+            stopCineH2();
+            h2CurrentIndex = (h2CurrentIndex - 1 + h2ImageIds.length) % h2ImageIds.length;
+            loadImageH2(h2ImageIds[h2CurrentIndex]);
+            updateFrameControlsH2();
+        }
+
+        function changeFrameH2(index) {
+            stopCineH2();
+            h2CurrentIndex = parseInt(index);
+            loadImageH2(h2ImageIds[h2CurrentIndex]);
+            updateFrameControlsH2();
+        }
+
+        function changeFPSH2(fps) {
+            h2FPS = parseInt(fps);
+            if (h2PlayingCine) {
+                stopCineH2();
+                playPauseH2();
+            }
+        }
+
+        function updateFrameControlsH2() {
+            const slider = document.getElementById('h2-frame-slider');
+            const info = document.getElementById('h2-frame-info');
+            
+            slider.max = h2ImageIds.length - 1;
+            slider.value = h2CurrentIndex;
+            info.textContent = `${h2CurrentIndex + 1}/${h2ImageIds.length}`;
+        }
+
+        async function loadImageH2(imageId) {
+            try {
+                if (!h2Element) {
+                    h2Element = document.getElementById('h2-dicom-element');
+                    const loading = h2Element.querySelector('#h2-loading');
+                    if (loading) loading.remove();
+                    cornerstone.enable(h2Element);
+                    
+                    cornerstoneTools.setToolActive('Wwwc', { mouseButtonMask: 1 });
+                    h2Element.addEventListener('cornerstoneimagerendered', updateImageInfoH2);
+                }
+                
+                const image = await cornerstone.loadImage(imageId);
+                cornerstone.displayImage(h2Element, image);
+                updateImageInfoH2();
+                
+            } catch (error) {
+                console.error('Error displaying image H2:', error);
+                notify('Error al mostrar imagen: ' + error.message, 'error');
+            }
+        }
+
+        function updateImageInfoH2() {
+            try {
+                if (!h2Element) return;
+                
+                const viewport = cornerstone.getViewport(h2Element);
+                if (!viewport) return;
+                
+                document.getElementById('h2-wc-value').textContent = Math.round(viewport.voi.windowCenter);
+                document.getElementById('h2-ww-value').textContent = Math.round(viewport.voi.windowWidth);
+                document.getElementById('h2-zoom-value').textContent = viewport.scale.toFixed(1) + 'x';
+                
+                document.getElementById('h2-window-center').value = viewport.voi.windowCenter;
+                document.getElementById('h2-window-width').value = viewport.voi.windowWidth;
+                document.getElementById('h2-zoom-slider').value = viewport.scale;
+                
+            } catch (e) {
+                console.error('Error updating image info H2:', e);
+            }
+        }
+
+        // Sliders H2
+        document.getElementById('h2-window-center').addEventListener('input', (e) => {
+            if (!h2Element) return;
+            const viewport = cornerstone.getViewport(h2Element);
+            viewport.voi.windowCenter = parseFloat(e.target.value);
+            cornerstone.setViewport(h2Element, viewport);
+        });
+
+        document.getElementById('h2-window-width').addEventListener('input', (e) => {
+            if (!h2Element) return;
+            const viewport = cornerstone.getViewport(h2Element);
+            viewport.voi.windowWidth = parseFloat(e.target.value);
+            cornerstone.setViewport(h2Element, viewport);
+        });
+
+        document.getElementById('h2-zoom-slider').addEventListener('input', (e) => {
+            if (!h2Element) return;
+            const viewport = cornerstone.getViewport(h2Element);
+            viewport.scale = parseFloat(e.target.value);
+            cornerstone.setViewport(h2Element, viewport);
+        });
+
+        function saveObservationsH2() {
+            if (!currentH2Study) return;
+            
+            const observations = document.getElementById('h2-observations').value;
+            DB.updateStudy(currentH2Study.id, {
+                observations,
+                radiologist: currentRadiologist
+            });
+            
+            notify('✅ Observaciones guardadas', 'success');
+        }
+
+        function completeStudyH2() {
+            if (!currentH2Study) return;
+            
+            const observations = document.getElementById('h2-observations').value;
+            
+            if (!observations.trim()) {
+                notify('Escribe observaciones antes de completar', 'error');
+                return;
+            }
+            
+            DB.updateStudy(currentH2Study.id, {
+                status: 'completed',
+                observations,
+                radiologist: currentRadiologist,
+                completedAt: new Date().toISOString()
+            });
+            
+            notify('✅ Estudio completado y enviado al Hospital #1', 'success');
+            backToWorklistH2();
+            loadH2Worklist();
+        }
+
+        // ==================== ADMIN FUNCTIONS ====================
+        function loadAdminData() {
+            // Estadísticas
+            const pending = DB.studies.filter(s => s.status === 'pending').length;
+            const completed = DB.studies.filter(s => s.status === 'completed').length;
+            
+            document.getElementById('admin-total-studies').textContent = DB.studies.length;
+            document.getElementById('admin-pending-studies').textContent = pending;
+            document.getElementById('admin-completed-studies').textContent = completed;
+            document.getElementById('admin-total-patients').textContent = DB.patients.length;
+            
+            // Lista de pacientes
+            const patientsList = document.getElementById('admin-patients-list');
+            patientsList.innerHTML = '';
+            
+            if (DB.patients.length === 0) {
+                patientsList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">👤</div>
+                        <p>No hay pacientes registrados</p>
+                    </div>
+                `;
+            } else {
+                DB.patients.forEach(patient => {
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.innerHTML = `
+                        <h3>${patient.name}</h3>
+                        <p><strong>ID:</strong> ${patient.id}</p>
+                        <p><strong>DNI:</strong> ${patient.dni}</p>
+                        <p><strong>Edad:</strong> ${patient.age} años</p>
+                        <p><strong>Género:</strong> ${patient.gender}</p>
+                        <p><strong>Teléfono:</strong> ${patient.phone}</p>
+                    `;
+                    patientsList.appendChild(card);
+                });
+            }
+            
+            // Lista de estudios
+            const studiesList = document.getElementById('admin-studies-list');
+            studiesList.innerHTML = '';
+            
+            if (DB.studies.length === 0) {
+                studiesList.innerHTML = `
+                    <div class="empty-state">
+                        <div class="empty-state-icon">📄</div>
+                        <p>No hay estudios registrados</p>
+                    </div>
+                `;
+            } else {
+                DB.studies.forEach(study => {
+                    const patient = DB.getPatient(study.patientId);
+                    const card = document.createElement('div');
+                    card.className = 'card';
+                    card.innerHTML = `
+                        <h3>${study.id}</h3>
+                        <p><strong>Paciente:</strong> ${patient ? patient.name : 'N/A'}</p>
+                        <p><strong>Hospital:</strong> ${study.hospital}</p>
+                        <p><strong>Fecha:</strong> ${study.date}</p>
+                        <p><strong>Modalidad:</strong> ${study.modality}</p>
+                        <p><strong>Radiólogo:</strong> ${study.radiologist || 'Sin asignar'}</p>
+                        <span class="status-badge ${study.status}">
+                            ${study.status === 'pending' ? 'PENDIENTE' : 'COMPLETADO'}
+                        </span>
+                        ${study.hasDICOM ? '<span class="status-badge has-dicom">✅ DICOM</span>' : ''}
+                    `;
+                    studiesList.appendChild(card);
+                });
+            }
+        }
+
+        // ==================== UTILITY FUNCTIONS ====================
+        function formatDate(dateStr) {
+            if (!dateStr || dateStr.length !== 8) return dateStr;
+            const year = dateStr.substring(0, 4);
+            const month = dateStr.substring(4, 6);
+            const day = dateStr.substring(6, 8);
+            return `${day}/${month}/${year}`;
+        }
+
+        // ==================== INICIALIZACIÓN ====================
+        document.addEventListener('DOMContentLoaded', () => {
+            loadH1Studies();
+            notify('Sistema ECO-COL PRO iniciado correctamente', 'success');
+        });
+
+        // ==================== DEBUG FUNCTION ====================
+        function debugStorage() {
+            console.log('%c🔍 DEBUG: Contenido del Storage', 'background: #00bfa5; color: white; padding: 5px; font-weight: bold');
+            console.log('📦 DicomFilesStorage:');
+            dicomFilesStorage.forEach((value, key) => {
+                console.log(`   ${key}:`, value);
+            });
+            console.log('💾 LocalStorage estudios:', DB.studies);
+            return {
+                storage: Array.from(dicomFilesStorage.entries()),
+                studies: DB.studies
+            };
+        }
+        window.debugStorage = debugStorage;
+        console.log('💡 Usa debugStorage() en consola para ver el estado');
+    </script>
+</body>
+</html>

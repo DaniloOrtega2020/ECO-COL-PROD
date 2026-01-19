@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ECO-COL - Sistema con Backend v3.0</title>
+    <script src="https://unpkg.com/dicom-parser@1.8.11/dist/dicomParser.min.js"></script>
+    <script>
+        // Configuración del backend
+        const API_URL = 'http://localhost:3000/api';
+        let apiToken = localStorage.getItem('ecocol_backend_token');
+    </script>
+</head>
+<body>
+    <h1>🚀 ECO-COL v3.0 - Conectado al Backend</h1>
+    <div id="status">
+        <p>✅ Backend: <span id="backend-status">Conectando...</span></p>
+        <p>👤 Usuario: <span id="user-name">No autenticado</span></p>
+    </div>
+    
+    <div id="login-section">
+        <h2>🔐 Login</h2>
+        <input type="email" id="email" placeholder="Email" value="hospital1@ecocol.com">
+        <input type="password" id="password" placeholder="Password" value="demo123">
+        <button onclick="login()">Iniciar Sesión</button>
+    </div>
+
+    <div id="app-section" style="display:none;">
+        <h2>📋 Crear Paciente</h2>
+        <input type="text" id="pat-name" placeholder="Nombre">
+        <input type="text" id="pat-dni" placeholder="DNI">
+        <button onclick="createPatient()">Crear Paciente</button>
+
+        <h2>📁 Subir DICOM</h2>
+        <input type="file" id="dicom-file" accept=".dcm,.dicom">
+        <select id="study-select">
+            <option value="">Seleccionar estudio...</option>
+        </select>
+        <button onclick="uploadDICOM()">Subir DICOM</button>
+
+        <h2>📊 Estudios</h2>
+        <div id="studies-list"></div>
+    </div>
+
+    <script>
+        // Verificar backend
+        async function checkBackend() {
+            try {
+                const res = await fetch('http://localhost:3000/health');
+                const data = await res.json();
+                document.getElementById('backend-status').textContent = '✅ Conectado';
+                document.getElementById('backend-status').style.color = 'green';
+            } catch (error) {
+                document.getElementById('backend-status').textContent = '❌ Desconectado';
+                document.getElementById('backend-status').style.color = 'red';
+            }
+        }
+
+        // Login
+        async function login() {
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+
+            try {
+                const res = await fetch(`${API_URL}/auth/login`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ email, password })
+                });
+
+                if (!res.ok) throw new Error('Login failed');
+
+                const data = await res.json();
+                apiToken = data.token;
+                localStorage.setItem('ecocol_backend_token', data.token);
+                
+                document.getElementById('user-name').textContent = data.user.name;
+                document.getElementById('login-section').style.display = 'none';
+                document.getElementById('app-section').style.display = 'block';
+
+                alert('✅ Login exitoso');
+                loadStudies();
+            } catch (error) {
+                alert('❌ Error en login: ' + error.message);
+            }
+        }
+
+        // Crear paciente
+        async function createPatient() {
+            const name = document.getElementById('pat-name').value;
+            const dni = document.getElementById('pat-dni').value;
+
+            try {
+                const res = await fetch(`${API_URL}/patients`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiToken}`
+                    },
+                    body: JSON.stringify({ name, dni, age: 45, gender: 'F', phone: '555-0000' })
+                });
+
+                const patient = await res.json();
+                alert('✅ Paciente creado: ' + patient.external_id);
+                
+                // Crear estudio automáticamente
+                await createStudy(patient.id);
+            } catch (error) {
+                alert('❌ Error: ' + error.message);
+            }
+        }
+
+        // Crear estudio
+        async function createStudy(patientId) {
+            try {
+                const res = await fetch(`${API_URL}/studies`, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'Authorization': `Bearer ${apiToken}`
+                    },
+                    body: JSON.stringify({
+                        patient_id: patientId,
+                        hospital: 'Hospital Regional Norte',
+                        modality: 'US'
+                    })
+                });
+
+                const study = await res.json();
+                alert('✅ Estudio creado: ' + study.external_id);
+                loadStudies();
+            } catch (error) {
+                alert('❌ Error: ' + error.message);
+            }
+        }
+
+        // Cargar estudios
+        async function loadStudies() {
+            try {
+                const res = await fetch(`${API_URL}/studies`, {
+                    headers: { 'Authorization': `Bearer ${apiToken}` }
+                });
+
+                const studies = await res.json();
+                const list = document.getElementById('studies-list');
+                const select = document.getElementById('study-select');
+                
+                list.innerHTML = '';
+                select.innerHTML = '<option value="">Seleccionar estudio...</option>';
+
+                studies.forEach(study => {
+                    // Lista
+                    const div = document.createElement('div');
+                    div.style.border = '1px solid #ccc';
+                    div.style.padding = '10px';
+                    div.style.margin = '5px';
+                    div.innerHTML = `
+                        <strong>${study.external_id}</strong> - ${study.patient_name}<br>
+                        Estado: ${study.status}<br>
+                        ${study.dicom_file_path ? '✅ Tiene DICOM' : '❌ Sin DICOM'}
+                    `;
+                    list.appendChild(div);
+
+                    // Select
+                    const option = document.createElement('option');
+                    option.value = study.id;
+                    option.textContent = `${study.external_id} - ${study.patient_name}`;
+                    select.appendChild(option);
+                });
+            } catch (error) {
+                alert('❌ Error cargando estudios: ' + error.message);
+            }
+        }
+
+        // Subir DICOM
+        async function uploadDICOM() {
+            const file = document.getElementById('dicom-file').files[0];
+            const studyId = document.getElementById('study-select').value;
+
+            if (!file || !studyId) {
+                alert('❌ Selecciona un archivo y un estudio');
+                return;
+            }
+
+            const formData = new FormData();
+            formData.append('dicom', file);
+
+            try {
+                const res = await fetch(`${API_URL}/dicom/upload/${studyId}`, {
+                    method: 'POST',
+                    headers: { 'Authorization': `Bearer ${apiToken}` },
+                    body: formData
+                });
+
+                const result = await res.json();
+                alert('✅ DICOM subido correctamente: ' + result.filename);
+                loadStudies();
+            } catch (error) {
+                alert('❌ Error subiendo DICOM: ' + error.message);
+            }
+        }
+
+        // Inicializar
+        checkBackend();
+        setInterval(checkBackend, 5000);
+
+        if (apiToken) {
+            fetch(`${API_URL}/studies`, {
+                headers: { 'Authorization': `Bearer ${apiToken}` }
+            }).then(res => {
+                if (res.ok) {
+                    document.getElementById('user-name').textContent = 'Autenticado';
+                    document.getElementById('login-section').style.display = 'none';
+                    document.getElementById('app-section').style.display = 'block';
+                    loadStudies();
+                }
+            });
+        }
+    </script>
+
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; max-width: 800px; margin: 0 auto; }
+        input, select, button { display: block; margin: 10px 0; padding: 10px; width: 100%; }
+        button { background: #00695c; color: white; border: none; cursor: pointer; }
+        button:hover { background: #00bfa5; }
+        #status { background: #f0f0f0; padding: 15px; border-radius: 5px; margin-bottom: 20px; }
+    </style>
+</body>
+</html>

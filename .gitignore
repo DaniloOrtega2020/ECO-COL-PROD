@@ -1,0 +1,11 @@
+.DS_Store
+*~
+*.log
+*.iso
+*.dcm
+*.DCM
+*.dicom
+*.DMC
+*.dmc
+*-RESPALDO-*
+ECOGRAFIAS DICOM/

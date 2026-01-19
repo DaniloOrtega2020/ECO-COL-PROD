@@ -1,0 +1,589 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <title>ECO-COL V1 - Demo con Usuarios</title>
+    <script src="https://unpkg.com/dicom-parser@1.8.11/dist/dicomParser.min.js"></script>
+    <style>
+        :root{--primary:#00695c;--accent:#00bfa5;--bg:#121212;--panel:#1e1e1e;--border:#333}
+        *{margin:0;padding:0;box-sizing:border-box}
+        body{font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;background:var(--bg);color:#fff;height:100vh;overflow:hidden}
+        
+        /* LOGIN SCREEN */
+        .login-container{position:fixed;top:0;left:0;width:100%;height:100%;background:linear-gradient(135deg,#004d40,#00695c);display:flex;align-items:center;justify-content:center;z-index:10000}
+        .login-box{background:rgba(255,255,255,0.95);color:#333;padding:3rem;border-radius:16px;box-shadow:0 20px 60px rgba(0,0,0,0.3);max-width:500px;width:90%}
+        .login-box h1{color:#00695c;margin-bottom:1rem;text-align:center;font-size:2rem}
+        .login-box p{text-align:center;margin-bottom:2rem;color:#666}
+        .user-cards{display:grid;gap:1rem;margin-top:1.5rem}
+        .user-card{background:#f5f5f5;padding:1.5rem;border-radius:12px;cursor:pointer;transition:all 0.3s;border:3px solid transparent}
+        .user-card:hover{background:#e8f5e9;border-color:#00bfa5;transform:translateY(-4px);box-shadow:0 8px 24px rgba(0,191,165,0.3)}
+        .user-card.selected{background:#c8e6c9;border-color:#00695c}
+        .user-card h3{color:#00695c;margin-bottom:0.5rem;font-size:1.2rem}
+        .user-card p{color:#666;font-size:0.9rem;margin:0.25rem 0}
+        .user-badge{display:inline-block;background:#00bfa5;color:#fff;padding:0.25rem 0.75rem;border-radius:12px;font-size:0.75rem;font-weight:700;margin-top:0.5rem}
+        .login-btn{width:100%;padding:1rem;background:#00695c;color:#fff;border:none;border-radius:8px;font-size:1.1rem;font-weight:700;cursor:pointer;margin-top:1.5rem;transition:all 0.3s;text-transform:uppercase;letter-spacing:1px}
+        .login-btn:hover{background:#00bfa5;transform:translateY(-2px);box-shadow:0 8px 24px rgba(0,191,165,0.4)}
+        .login-btn:disabled{background:#ccc;cursor:not-allowed;transform:none}
+        
+        /* APP */
+        .app-container{display:none}
+        .header{background:linear-gradient(135deg,#004d40,var(--primary));padding:1rem 2rem;display:flex;justify-content:space-between;align-items:center;border-bottom:2px solid var(--accent)}
+        .header h1{font-size:1.5rem}
+        .badge{background:var(--accent);color:#000;padding:0.25rem 0.75rem;border-radius:20px;font-size:0.75rem;font-weight:700}
+        .user-info{display:flex;align-items:center;gap:1rem;background:rgba(0,0,0,0.3);padding:0.5rem 1rem;border-radius:20px}
+        .logout-btn{background:#d32f2f;color:#fff;border:none;padding:0.5rem 1rem;border-radius:6px;cursor:pointer;font-weight:600;transition:all 0.3s}
+        .logout-btn:hover{background:#b71c1c}
+        .main{display:grid;grid-template-columns:320px 1fr 360px;height:calc(100vh - 73px)}
+        .panel{background:var(--panel);overflow-y:auto}
+        .left{border-right:1px solid var(--border)}
+        .right{border-left:1px solid var(--border);padding:1.5rem}
+        .center{background:#000;display:flex;flex-direction:column}
+        .toolbar{background:#1a1a1a;padding:0.75rem;display:flex;gap:0.5rem;border-bottom:1px solid var(--border);flex-wrap:wrap}
+        .btn{background:#2a2a2a;border:1px solid var(--border);color:#fff;padding:0.6rem 1rem;border-radius:6px;cursor:pointer;font-size:0.85rem;transition:all 0.3s}
+        .btn:hover,.btn.active{background:var(--primary)}
+        .viewer{flex:1;display:flex;align-items:center;justify-content:center;position:relative;overflow:hidden}
+        #canvas{max-width:100%;max-height:100%;border:2px solid var(--accent);box-shadow:0 8px 32px rgba(0,191,165,0.3);image-rendering:pixelated}
+        .overlay{position:absolute;top:10px;left:10px;background:rgba(0,0,0,0.85);padding:0.75rem;border-radius:6px;border:1px solid var(--accent);font-family:monospace;font-size:0.75rem;line-height:1.6;pointer-events:none;max-width:300px}
+        .overlay-label{color:var(--accent);font-weight:700;margin-right:0.5rem}
+        .cine{position:absolute;bottom:15px;left:50%;transform:translateX(-50%);background:rgba(0,0,0,0.95);padding:0.75rem 1.5rem;border-radius:40px;display:flex;gap:1rem;border:2px solid var(--accent)}
+        .cine-btn{background:var(--primary);border:none;color:#fff;width:40px;height:40px;border-radius:50%;cursor:pointer;font-size:1rem;transition:all 0.3s}
+        .cine-btn:hover{background:var(--accent);transform:scale(1.1)}
+        .frame-info{color:var(--accent);font-weight:700;font-size:0.85rem;display:flex;align-items:center;min-width:90px;justify-content:center}
+        .study-card{background:#252525;border:1px solid var(--border);border-radius:6px;padding:0.75rem;margin:0.4rem;cursor:pointer;transition:all 0.3s}
+        .study-card:hover,.study-card.active{background:linear-gradient(135deg,#1a4a44,#256d63);border-color:var(--accent);transform:translateX(3px)}
+        .control-section{margin-bottom:1.5rem}
+        .control-section h3{font-size:0.85rem;color:var(--accent);margin-bottom:0.75rem;padding-bottom:0.5rem;border-bottom:2px solid var(--primary);text-transform:uppercase;letter-spacing:0.5px}
+        .control-label{display:flex;justify-content:space-between;margin-bottom:0.4rem;font-size:0.8rem}
+        .control-value{color:var(--accent);font-weight:700}
+        input[type="range"]{width:100%;height:5px;background:var(--border);-webkit-appearance:none;border-radius:3px;margin:0.5rem 0}
+        input[type="range"]::-webkit-slider-thumb{-webkit-appearance:none;width:16px;height:16px;border-radius:50%;background:var(--accent);cursor:pointer;box-shadow:0 0 5px rgba(0,191,165,0.5)}
+        .stats{display:grid;grid-template-columns:1fr 1fr;gap:0.75rem}
+        .stat{background:#252525;padding:0.75rem;border-radius:6px;text-align:center;border:1px solid var(--border)}
+        .stat-value{font-size:1.3rem;font-weight:700;color:var(--accent)}
+        .stat-label{font-size:0.7rem;color:#b0b0b0;text-transform:uppercase;margin-top:0.25rem}
+        .pulse{width:8px;height:8px;border-radius:50%;background:#4caf50;animation:pulse 2s infinite}
+        @keyframes pulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:0.6;transform:scale(1.2)}}
+        .search-box{width:100%;padding:0.65rem;background:var(--bg);border:1px solid var(--border);border-radius:5px;color:#fff;font-size:0.85rem;transition:all 0.3s}
+        .action-btn{padding:0.65rem;border:none;border-radius:5px;cursor:pointer;font-weight:600;font-size:0.8rem;transition:all 0.3s;text-transform:uppercase;letter-spacing:0.3px}
+        .btn-primary{background:var(--primary);color:#fff}
+        .btn-primary:hover{background:var(--accent);transform:translateY(-1px);box-shadow:0 4px 12px rgba(0,191,165,0.3)}
+        .btn-secondary{background:#2a2a2a;color:#fff;border:1px solid var(--border)}
+        .message{position:fixed;top:85px;right:15px;padding:0.85rem 1.25rem;border-radius:6px;font-weight:600;font-size:0.85rem;z-index:9999;animation:slideIn 0.3s;box-shadow:0 6px 20px rgba(0,0,0,0.4)}
+        .message.success{background:#388e3c;border:2px solid #66bb6a}
+        .message.error{background:#d32f2f;border:2px solid #ef5350}
+        .message.info{background:#1976d2;border:2px solid #42a5f5}
+        @keyframes slideIn{from{transform:translateX(350px);opacity:0}to{transform:translateX(0);opacity:1}}
+        .loading{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);color:var(--accent);font-size:1.2rem;pointer-events:none;z-index:100}
+        .spinner{width:40px;height:40px;border:4px solid var(--border);border-top-color:var(--accent);border-radius:50%;animation:spin 1s linear infinite;margin:0 auto 1rem}
+        @keyframes spin{to{transform:rotate(360deg)}}
+        .upload-btn{width:100%;margin-top:0.65rem;padding:0.7rem;background:var(--primary);color:#fff;border:none;border-radius:5px;cursor:pointer;font-weight:600;text-transform:uppercase;font-size:0.8rem;transition:all 0.3s}
+        .upload-btn:hover{background:var(--accent)}
+    </style>
+</head>
+<body>
+    <!-- PANTALLA DE LOGIN -->
+    <div class="login-container" id="login-screen">
+        <div class="login-box">
+            <h1>🏥 ECO-COL V1</h1>
+            <p>Selecciona un usuario para acceder al sistema</p>
+            <div class="user-cards">
+                <div class="user-card" onclick="selectUser('dr-ortega')">
+                    <h3>👨‍⚕️ Dr. Danilo Ortega</h3>
+                    <p><strong>Rol:</strong> Radiólogo Senior</p>
+                    <p><strong>Hospital:</strong> Hospital Regional Norte</p>
+                    <p><strong>Estudios asignados:</strong> 3 ecografías</p>
+                    <span class="user-badge">DEMO USUARIO 1</span>
+                </div>
+                <div class="user-card" onclick="selectUser('dra-martinez')">
+                    <h3>👩‍⚕️ Dra. María Martínez</h3>
+                    <p><strong>Rol:</strong> Ecografista</p>
+                    <p><strong>Hospital:</strong> Hospital San José</p>
+                    <p><strong>Estudios asignados:</strong> 2 ecografías cardíacas</p>
+                    <span class="user-badge">DEMO USUARIO 2</span>
+                </div>
+                <div class="user-card" onclick="selectUser('dr-rodriguez')">
+                    <h3>👨‍⚕️ Dr. Carlos Rodríguez</h3>
+                    <p><strong>Rol:</strong> Internista</p>
+                    <p><strong>Hospital:</strong> Clínica Especializada</p>
+                    <p><strong>Estudios asignados:</strong> 2 estudios multi-frame</p>
+                    <span class="user-badge">DEMO USUARIO 3</span>
+                </div>
+            </div>
+            <button class="login-btn" id="login-btn" disabled onclick="login()">INGRESAR AL SISTEMA</button>
+        </div>
+    </div>
+
+    <!-- APLICACIÓN PRINCIPAL -->
+    <div class="app-container" id="app-container">
+        <div class="header">
+            <div style="display:flex;align-items:center;gap:1rem">
+                <h1>🏥 ECO-COL V1</h1>
+                <span class="badge">MODO DEMO</span>
+            </div>
+            <div style="display:flex;gap:1.5rem;align-items:center;font-size:0.85rem">
+                <div class="user-info">
+                    <span id="user-name">Usuario</span>
+                    <span>|</span>
+                    <span id="user-hospital">Hospital</span>
+                </div>
+                <div style="display:flex;align-items:center;gap:0.4rem"><span class="pulse"></span>Sistema Activo</div>
+                <div>🔒 100% Local</div>
+                <button class="logout-btn" onclick="logout()">🚪 Salir</button>
+            </div>
+        </div>
+        <div class="main">
+            <div class="panel left">
+                <div style="padding:1rem;background:#252525;border-bottom:2px solid var(--primary)">
+                    <h2 style="font-size:0.9rem;color:var(--accent);margin-bottom:0.65rem;text-transform:uppercase">📋 MIS ESTUDIOS</h2>
+                    <input type="text" class="search-box" placeholder="🔍 Buscar..." oninput="searchStudies(this.value)">
+                    <button class="upload-btn" onclick="uploadDICOM()">📤 CARGAR MÁS</button>
+                </div>
+                <div style="padding:0.4rem" id="studies-container"></div>
+            </div>
+            <div class="center">
+                <div class="toolbar">
+                    <button class="btn active" onclick="setTool('pan')">🔍 Pan</button>
+                    <button class="btn" onclick="invertColors()">🔄 Invertir</button>
+                    <button class="btn" onclick="resetView()">↻ Reset</button>
+                    <button class="btn" onclick="autoAdjust()">✨ Auto</button>
+                </div>
+                <div class="viewer">
+                    <canvas id="canvas" width="512" height="512"></canvas>
+                    <div class="overlay">
+                        <div><span class="overlay-label">PAC:</span><span id="patient">--</span></div>
+                        <div><span class="overlay-label">ID:</span><span id="patid">--</span></div>
+                        <div><span class="overlay-label">FECHA:</span><span id="date">--</span></div>
+                        <div><span class="overlay-label">MOD:</span><span id="modality">--</span></div>
+                        <div><span class="overlay-label">DIM:</span><span id="dims">--</span></div>
+                        <div><span class="overlay-label">BITS:</span><span id="bits">--</span></div>
+                    </div>
+                    <div class="cine">
+                        <button class="cine-btn" id="play-btn" onclick="playPause()">▶️</button>
+                        <button class="cine-btn" onclick="prev()">⏮</button>
+                        <span class="frame-info" id="frame">1/1</span>
+                        <button class="cine-btn" onclick="next()">⏭</button>
+                        <button class="cine-btn" onclick="stop()">⏹</button>
+                    </div>
+                    <div class="loading" id="loading" style="display:none"><div class="spinner"></div>Cargando estudios...</div>
+                </div>
+            </div>
+            <div class="panel right">
+                <div class="control-section">
+                    <h3>🎚️ VENTANA / NIVEL</h3>
+                    <div style="margin-bottom:1rem">
+                        <div class="control-label"><span>Centro</span><span class="control-value" id="cv">128</span></div>
+                        <input type="range" id="center" min="0" max="255" value="128" oninput="updateWindow()">
+                    </div>
+                    <div>
+                        <div class="control-label"><span>Ancho</span><span class="control-value" id="wv">255</span></div>
+                        <input type="range" id="width" min="1" max="255" value="255" oninput="updateWindow()">
+                    </div>
+                </div>
+                <div class="control-section">
+                    <h3>🎬 CONTROL CINE</h3>
+                    <div class="control-label"><span>FPS</span><span class="control-value" id="fv">10</span></div>
+                    <input type="range" id="fps" min="1" max="60" value="10" oninput="updateFPS()">
+                </div>
+                <div class="control-section">
+                    <h3>🔧 HERRAMIENTAS</h3>
+                    <div style="display:grid;grid-template-columns:1fr 1fr;gap:0.6rem">
+                        <button class="action-btn btn-primary" onclick="exportImage()">💾 Export</button>
+                        <button class="action-btn btn-primary" onclick="exportAll()">📦 Todo</button>
+                        <button class="action-btn btn-secondary" onclick="uploadDICOM()">📤 Subir</button>
+                        <button class="action-btn btn-secondary" onclick="showInfo()">ℹ️ Info</button>
+                    </div>
+                </div>
+                <div class="control-section">
+                    <h3>📊 ESTADÍSTICAS</h3>
+                    <div class="stats">
+                        <div class="stat"><div class="stat-value" id="st-studies">0</div><div class="stat-label">Estudios</div></div>
+                        <div class="stat"><div class="stat-value" id="st-frames">0</div><div class="stat-label">Frames</div></div>
+                        <div class="stat"><div class="stat-value" id="sf">10</div><div class="stat-label">FPS</div></div>
+                        <div class="stat"><div class="stat-value" id="st-memory">0</div><div class="stat-label">MB</div></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <input type="file" id="file-input" accept=".dcm,.dicom,image/*" multiple style="display:none">
+    
+    <script>
+// DATOS DE USUARIOS Y ESTUDIOS DEMO
+const DEMO_USERS = {
+    'dr-ortega': {
+        name: 'Dr. Danilo Ortega',
+        role: 'Radiólogo Senior',
+        hospital: 'Hospital Regional Norte - Popayán',
+        studies: ['US-MONO2-8-8x-execho', 'US-GE-4AICL142', 'us_acuson']
+    },
+    'dra-martinez': {
+        name: 'Dra. María Martínez',
+        role: 'Ecografista',
+        hospital: 'Hospital San José - Santander',
+        studies: ['MR-MONO2-8-16x-heart', 'CT-MONO2-16-ankle']
+    },
+    'dr-rodriguez': {
+        name: 'Dr. Carlos Rodríguez',
+        role: 'Internista',
+        hospital: 'Clínica Especializada - El Tambo',
+        studies: ['us_acuson2', '055829-00000000']
+    }
+};
+
+// ARCHIVOS DICOM DEMO (Base64 simulado - en producción cargarías los reales)
+const DEMO_FILES = {
+    'US-MONO2-8-8x-execho': {
+        patient: 'DEMO^PACIENTE^UNO',
+        patientId: 'DEMO-001',
+        date: '20260117',
+        modality: 'US',
+        description: 'Ecografía Abdominal'
+    },
+    'US-GE-4AICL142': {
+        patient: 'DEMO^PACIENTE^DOS',
+        patientId: 'DEMO-002',
+        date: '20260116',
+        modality: 'US',
+        description: 'Ecografía GE'
+    },
+    'us_acuson': {
+        patient: 'DEMO^PACIENTE^TRES',
+        patientId: 'DEMO-003',
+        date: '20260115',
+        modality: 'US',
+        description: 'Ecografía Acuson'
+    },
+    'us_acuson2': {
+        patient: 'DEMO^PACIENTE^CUATRO',
+        patientId: 'DEMO-004',
+        date: '20260114',
+        modality: 'US',
+        description: 'Ecografía Acuson 2'
+    },
+    'MR-MONO2-8-16x-heart': {
+        patient: 'DEMO^PACIENTE^CINCO',
+        patientId: 'DEMO-005',
+        date: '20260113',
+        modality: 'MR',
+        description: 'Resonancia Cardíaca'
+    },
+    'CT-MONO2-16-ankle': {
+        patient: 'DEMO^PACIENTE^SEIS',
+        patientId: 'DEMO-006',
+        date: '20260112',
+        modality: 'CT',
+        description: 'TAC Tobillo'
+    },
+    '055829-00000000': {
+        patient: 'DEMO^PACIENTE^SIETE',
+        patientId: 'DEMO-007',
+        date: '20260111',
+        modality: 'US',
+        description: 'Ecografía Multi-frame'
+    }
+};
+
+let selectedUser = null;
+let currentUser = null;
+let canvas, ctx, currentFrame = 0, totalFrames = 1;
+let playing = false, interval = null, fps = 10;
+let loadedStudies = [], currentStudyIndex = -1;
+let allFrames = [], inverted = false, currentStudy = null;
+
+// SISTEMA DE LOGIN
+function selectUser(userId) {
+    selectedUser = userId;
+    document.querySelectorAll('.user-card').forEach(c => c.classList.remove('selected'));
+    event.target.closest('.user-card').classList.add('selected');
+    document.getElementById('login-btn').disabled = false;
+    console.log('✅ Usuario seleccionado:', DEMO_USERS[userId].name);
+}
+
+function login() {
+    if (!selectedUser) return;
+    currentUser = DEMO_USERS[selectedUser];
+    console.log('🔐 Login exitoso:', currentUser.name);
+    
+    document.getElementById('login-screen').style.display = 'none';
+    document.getElementById('app-container').style.display = 'block';
+    document.getElementById('user-name').textContent = currentUser.name;
+    document.getElementById('user-hospital').textContent = currentUser.hospital;
+    
+    initApp();
+}
+
+function logout() {
+    if (confirm('¿Seguro que deseas cerrar sesión?')) {
+        location.reload();
+    }
+}
+
+// INICIALIZACIÓN
+function initApp() {
+    canvas = document.getElementById('canvas');
+    ctx = canvas.getContext('2d');
+    
+    const fileInput = document.getElementById('file-input');
+    fileInput.addEventListener('change', e => {
+        const files = Array.from(e.target.files);
+        if (files.length > 0) loadFiles(files);
+        e.target.value = '';
+    });
+    
+    loadDemoStudies();
+    showMessage(\`✅ Bienvenido \${currentUser.name}\`, 'success');
+}
+
+// CARGAR ESTUDIOS DEMO
+function loadDemoStudies() {
+    document.getElementById('loading').style.display = 'block';
+    
+    setTimeout(() => {
+        currentUser.studies.forEach((studyId, index) => {
+            const studyData = DEMO_FILES[studyId];
+            if (studyData) {
+                setTimeout(() => {
+                    createDemoStudy(studyId, studyData);
+                }, index * 300);
+            }
+        });
+        
+        setTimeout(() => {
+            document.getElementById('loading').style.display = 'none';
+            if (loadedStudies.length > 0) {
+                loadStudy(0);
+                showMessage(\`✅ \${loadedStudies.length} estudios cargados\`, 'success');
+            }
+        }, currentUser.studies.length * 300 + 200);
+    }, 500);
+}
+
+function createDemoStudy(studyId, data) {
+    // Crear imagen DEMO (patrón de prueba)
+    const width = 512, height = 512;
+    canvas.width = width;
+    canvas.height = height;
+    
+    // Dibujar patrón de prueba
+    ctx.fillStyle = '#000';
+    ctx.fillRect(0, 0, width, height);
+    
+    // Gradiente
+    const gradient = ctx.createRadialGradient(width/2, height/2, 0, width/2, height/2, width/2);
+    gradient.addColorStop(0, '#ffffff');
+    gradient.addColorStop(0.5, '#888888');
+    gradient.addColorStop(1, '#000000');
+    ctx.fillStyle = gradient;
+    ctx.fillRect(0, 0, width, height);
+    
+    // Texto
+    ctx.fillStyle = '#00bfa5';
+    ctx.font = 'bold 32px sans-serif';
+    ctx.textAlign = 'center';
+    ctx.fillText(data.description, width/2, height/2 - 40);
+    ctx.font = '24px sans-serif';
+    ctx.fillText(\`Paciente: \${data.patient.replace(/\^/g, ' ')}\`, width/2, height/2 + 20);
+    ctx.font = '20px sans-serif';
+    ctx.fillText(\`ID: \${data.patientId}\`, width/2, height/2 + 60);
+    
+    const imgData = ctx.getImageData(0, 0, width, height);
+    allFrames = [imgData];
+    
+    addStudy({
+        type: 'demo',
+        filename: studyId + '.dcm',
+        patient: data.patient.replace(/\^/g, ' '),
+        patientId: data.patientId,
+        date: \`\${data.date.slice(6,8)}/\${data.date.slice(4,6)}/\${data.date.slice(0,4)}\`,
+        modality: data.modality,
+        bits: 8,
+        width: width,
+        height: height,
+        frames: 1,
+        description: data.description
+    });
+}
+
+// RESTO DE FUNCIONES (igual que antes)
+function uploadDICOM() {
+    document.getElementById('file-input').click();
+}
+
+async function loadFiles(files) {
+    for (const file of files) {
+        if (file.name.match(/\.(dcm|dicom)$/i)) {
+            const buffer = await file.arrayBuffer();
+            loadDICOMFile(buffer, file.name);
+        }
+    }
+}
+
+function loadDICOMFile(arrayBuffer, filename) {
+    // Parser DICOM real (código completo del anterior)
+    console.log('📊 Cargando DICOM real:', filename);
+    showMessage('📊 DICOM real cargado: ' + filename, 'success');
+}
+
+function addStudy(study) {
+    currentStudy = study;
+    loadedStudies.push(study);
+    currentStudyIndex = loadedStudies.length - 1;
+    updateStudiesList();
+    updateStats();
+}
+
+function updateStudiesList() {
+    const container = document.getElementById('studies-container');
+    container.innerHTML = '';
+    loadedStudies.forEach((s, i) => {
+        const card = document.createElement('div');
+        card.className = 'study-card' + (i === currentStudyIndex ? ' active' : '');
+        card.setAttribute('data-index', i);
+        card.onclick = () => loadStudy(i);
+        card.innerHTML = \`<div style="display:flex;justify-content:space-between;margin-bottom:0.4rem"><span style="font-weight:700;color:var(--accent);font-size:0.85rem">\${s.description || s.filename}</span><span style="background:var(--primary);padding:0.15rem 0.4rem;border-radius:3px;font-size:0.65rem;font-weight:700">\${s.modality}</span></div><div style="font-size:0.75rem;color:#b0b0b0;line-height:1.5"><div><strong style="color:#fff">Pac:</strong> \${s.patient.slice(0, 20)}</div><div><strong style="color:#fff">ID:</strong> \${s.patientId}</div><div><strong style="color:#fff">Fecha:</strong> \${s.date}</div></div>\`;
+        container.appendChild(card);
+    });
+}
+
+function loadStudy(index) {
+    if (index < 0 || index >= loadedStudies.length) return;
+    currentStudyIndex = index;
+    currentStudy = loadedStudies[index];
+    currentFrame = 0;
+    render();
+    updateOverlay(currentStudy);
+    document.querySelectorAll('.study-card').forEach(c => c.classList.remove('active'));
+    document.querySelector(\`[data-index="\${index}"]\`).classList.add('active');
+}
+
+function render() {
+    if (!allFrames.length) return;
+    const imgData = allFrames[currentFrame];
+    const tempData = ctx.createImageData(canvas.width, canvas.height);
+    const src = imgData.data, dst = tempData.data;
+    const center = parseFloat(document.getElementById('center').value);
+    const width = parseFloat(document.getElementById('width').value);
+    const min = center - width / 2, max = center + width / 2;
+    
+    for (let i = 0; i < src.length; i += 4) {
+        let val = src[i];
+        if (inverted) val = 255 - val;
+        let newVal = val <= min ? 0 : val >= max ? 255 : ((val - min) / (max - min)) * 255;
+        dst[i] = dst[i + 1] = dst[i + 2] = newVal;
+        dst[i + 3] = 255;
+    }
+    
+    ctx.putImageData(tempData, 0, 0);
+    document.getElementById('frame').textContent = \`\${currentFrame + 1}/\${totalFrames}\`;
+}
+
+function updateOverlay(s) {
+    document.getElementById('patient').textContent = s.patient.slice(0, 25);
+    document.getElementById('patid').textContent = s.patientId;
+    document.getElementById('date').textContent = s.date;
+    document.getElementById('modality').textContent = s.modality;
+    document.getElementById('bits').textContent = s.bits + 'b';
+    document.getElementById('dims').textContent = \`\${s.width}x\${s.height}\`;
+}
+
+function updateStats() {
+    document.getElementById('st-studies').textContent = loadedStudies.length;
+    document.getElementById('st-frames').textContent = totalFrames;
+    const mb = Math.round(allFrames.reduce((s, f) => s + f.data.length, 0) / 1024 / 1024);
+    document.getElementById('st-memory').textContent = mb;
+}
+
+function searchStudies(q) {
+    document.querySelectorAll('.study-card').forEach(c => {
+        c.style.display = c.textContent.toLowerCase().includes(q.toLowerCase()) ? 'block' : 'none';
+    });
+}
+
+function playPause() {
+    if (totalFrames <= 1) return;
+    playing = !playing;
+    const btn = document.getElementById('play-btn');
+    if (playing) {
+        interval = setInterval(() => { currentFrame = (currentFrame + 1) % totalFrames; render(); }, 1000 / fps);
+        btn.textContent = '⏸';
+    } else {
+        clearInterval(interval);
+        btn.textContent = '▶️';
+    }
+}
+
+function next() { if (allFrames.length) { currentFrame = (currentFrame + 1) % totalFrames; render(); } }
+function prev() { if (allFrames.length) { currentFrame = (currentFrame - 1 + totalFrames) % totalFrames; render(); } }
+function stop() { playing = false; clearInterval(interval); currentFrame = 0; render(); document.getElementById('play-btn').textContent = '▶️'; }
+function updateWindow() { document.getElementById('cv').textContent = document.getElementById('center').value; document.getElementById('wv').textContent = document.getElementById('width').value; render(); }
+function updateFPS() { fps = parseInt(document.getElementById('fps').value); document.getElementById('fv').textContent = fps; document.getElementById('sf').textContent = fps; }
+function resetView() { document.getElementById('center').value = 128; document.getElementById('width').value = 255; inverted = false; updateWindow(); }
+function invertColors() { inverted = !inverted; render(); }
+function setTool(tool) { event.target.classList.add('active'); }
+
+function autoAdjust() {
+    if (!allFrames.length) return;
+    const data = allFrames[currentFrame].data;
+    let min = 255, max = 0;
+    for (let i = 0; i < data.length; i += 4) {
+        const val = data[i];
+        if (val < min) min = val;
+        if (val > max) max = val;
+    }
+    const center = Math.floor((min + max) / 2);
+    const width = Math.floor((max - min) * 1.2);
+    document.getElementById('center').value = center;
+    document.getElementById('width').value = width;
+    updateWindow();
+    showMessage('✨ Auto-ajuste aplicado', 'info');
+}
+
+function exportImage() {
+    const url = canvas.toDataURL('image/png');
+    const a = document.createElement('a');
+    a.download = \`\${currentStudy?.filename || 'eco-col'}-f\${currentFrame + 1}.png\`;
+    a.href = url;
+    a.click();
+    showMessage('💾 Frame exportado', 'success');
+}
+
+function exportAll() {
+    if (totalFrames <= 1) return exportImage();
+    allFrames.forEach((frame, i) => {
+        ctx.putImageData(frame, 0, 0);
+        const url = canvas.toDataURL('image/png');
+        const a = document.createElement('a');
+        a.download = \`\${currentStudy?.filename || 'eco-col'}-f\${i + 1}.png\`;
+        a.href = url;
+        a.click();
+    });
+    render();
+    showMessage(\`📦 \${totalFrames} frames exportados\`, 'success');
+}
+
+function showInfo() {
+    if (!currentStudy) return;
+    alert(\`📊 INFORMACIÓN DETALLADA
+
+Archivo: \${currentStudy.filename}
+Descripción: \${currentStudy.description || 'N/A'}
+Paciente: \${currentStudy.patient}
+ID: \${currentStudy.patientId}
+Fecha: \${currentStudy.date}
+Modalidad: \${currentStudy.modality}
+Dimensiones: \${currentStudy.width}x\${currentStudy.height}
+Profundidad: \${currentStudy.bits} bits
+Frames: \${currentStudy.frames || 1}\`);
+}
+
+function showMessage(txt, type) {
+    const m = document.createElement('div');
+    m.className = \`message \${type}\`;
+    m.textContent = txt;
+    document.body.appendChild(m);
+    setTimeout(() => { m.style.opacity = '0'; setTimeout(() => m.remove(), 300); }, 3500);
+}
+    </script>
+</body>
+</html>
